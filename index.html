@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="UTF-8">
+    <title>Моё мини-приложение</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  </head>
+  <body>
+    <h2>Добро пожаловать в мини-приложение!</h2>
+    <p id="user"></p>
+
+    <script>
+      const tg = window.Telegram.WebApp;
+      tg.expand(); // делает окно больше
+
+      document.getElementById("user").innerText =
+        "Привет, " + tg.initDataUnsafe.user.first_name;
+    </script>
+  </body>
+</html>
