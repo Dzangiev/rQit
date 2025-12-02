@@ -1,20 +1,492 @@
 <!DOCTYPE html>
-<html>
-  <head>
+<html lang="ru">
+<head>
     <meta charset="UTF-8">
-    <title>Моё мини-приложение</title>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  </head>
-  <body>
-    <h2>Добро пожаловать в мини-приложение!</h2>
-    <p id="user"></p>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Медиа плеер</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: #1a1a1a;
+            color: #fff;
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+
+        .upload-section input {
+            margin: 10px 0;
+            padding: 10px;
+            background: #3a3a3a;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .video-container {
+            margin-bottom: 20px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        video {
+            width: 100%;
+            max-height: 500px;
+            display: block;
+        }
+
+        .controls {
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .control-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background: #5a5ad8;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        button:hover {
+            background: #4a4ac8;
+        }
+
+        select {
+            padding: 10px;
+            background: #3a3a3a;
+            border: none;
+            color: #fff;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        .timecode {
+            font-family: monospace;
+            font-size: 16px;
+        }
+
+        .waveform-container {
+            position: relative;
+            overflow: hidden;
+            background: #2a2a2a;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            height: 240px;
+            cursor: grab;
+        }
+
+        .waveform-container.dragging {
+            cursor: grabbing;
+        }
+
+        .waveform-wrapper {
+            position: absolute;
+            left: 0;
+            top: 20px;
+            transition: none;
+            will-change: transform;
+        }
+
+        canvas {
+            display: block;
+            pointer-events: none;
+        }
+
+        .playhead {
+            position: absolute;
+            width: 2px;
+            height: 100%;
+            background: #ff4444;
+            pointer-events: none;
+            z-index: 10;
+            left: 50%;
+            top: 0;
+            margin-left: -1px;
+            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
+        }
+
+        .zoom-controls {
+            margin-bottom: 10px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="upload-section">
+            <h2>Загрузить медиа файл</h2>
+            <input type="file" id="fileInput" accept="audio/*,video/*">
+        </div>
+
+        <div id="playerSection" style="display: none;">
+            <div class="video-container" id="videoContainer" style="display: none;">
+                <video id="videoPlayer" controls></video>
+            </div>
+
+            <div class="controls">
+                <div class="control-row">
+                    <button id="playPauseBtn">▶ Воспроизвести</button>
+                    <span class="timecode" id="currentTime">0:00.00</span>
+                    <span>/</span>
+                    <span class="timecode" id="duration">0:00.00</span>
+                    <label>Скорость:</label>
+                    <select id="speedSelect">
+                        <option value="0.25">0.25x</option>
+                        <option value="0.5">0.5x</option>
+                        <option value="0.75">0.75x</option>
+                        <option value="1" selected>1x</option>
+                        <option value="1.25">1.25x</option>
+                        <option value="1.5">1.5x</option>
+                        <option value="1.75">1.75x</option>
+                        <option value="2">2x</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="zoom-controls">
+                <button id="zoomIn">+ Увеличить</button>
+                <button id="zoomOut">- Уменьшить</button>
+                <button id="zoomReset">Сброс</button>
+            </div>
+
+            <div class="waveform-container" id="waveformContainer">
+                <div class="playhead" id="playhead"></div>
+                <div id="loading" class="loading">Загрузка визуализации...</div>
+                <div class="waveform-wrapper" id="waveformWrapper">
+                    <canvas id="waveformCanvas"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
 
     <script>
-      const tg = window.Telegram.WebApp;
-      tg.expand(); // делает окно больше
+        let audioContext;
+        let audioBuffer;
+        let mediaElement;
+        let isVideo = false;
+        let zoomLevel = 1;
+        let waveformOffset = 0;
+        let isDragging = false;
+        let dragStartX = 0;
+        let dragStartOffset = 0;
+        let animationFrameId = null;
 
-      document.getElementById("user").innerText =
-        "Привет, " + tg.initDataUnsafe.user.first_name;
+        const fileInput = document.getElementById('fileInput');
+        const playerSection = document.getElementById('playerSection');
+        const videoContainer = document.getElementById('videoContainer');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const speedSelect = document.getElementById('speedSelect');
+        const currentTimeEl = document.getElementById('currentTime');
+        const durationEl = document.getElementById('duration');
+        const waveformCanvas = document.getElementById('waveformCanvas');
+        const waveformContainer = document.getElementById('waveformContainer');
+        const waveformWrapper = document.getElementById('waveformWrapper');
+        const playhead = document.getElementById('playhead');
+        const loading = document.getElementById('loading');
+        const zoomIn = document.getElementById('zoomIn');
+        const zoomOut = document.getElementById('zoomOut');
+        const zoomReset = document.getElementById('zoomReset');
+
+        fileInput.addEventListener('change', handleFileSelect);
+        playPauseBtn.addEventListener('click', togglePlayPause);
+        speedSelect.addEventListener('change', changeSpeed);
+        waveformContainer.addEventListener('mousedown', onMouseDown);
+        waveformContainer.addEventListener('mousemove', onMouseMove);
+        waveformContainer.addEventListener('mouseup', onMouseUp);
+        waveformContainer.addEventListener('mouseleave', onMouseUp);
+        waveformContainer.addEventListener('click', seekToPosition);
+        zoomIn.addEventListener('click', () => changeZoom(1.5));
+        zoomOut.addEventListener('click', () => changeZoom(0.67));
+        zoomReset.addEventListener('click', () => { zoomLevel = 1; drawWaveform(); });
+        
+        window.addEventListener('resize', () => {
+            if (audioBuffer) {
+                drawWaveform();
+                updateWaveformPosition();
+            }
+        });
+
+        function onMouseDown(e) {
+            if (e.target === waveformCanvas || e.target === waveformWrapper) {
+                isDragging = true;
+                dragStartX = e.clientX;
+                dragStartOffset = waveformOffset;
+                waveformContainer.classList.add('dragging');
+                
+                if (mediaElement && !mediaElement.paused) {
+                    mediaElement.pause();
+                }
+            }
+        }
+
+        function onMouseMove(e) {
+            if (isDragging) {
+                e.preventDefault();
+                const deltaX = e.clientX - dragStartX;
+                waveformOffset = dragStartOffset + deltaX;
+                
+                // Ограничения для прокрутки
+                const containerWidth = waveformContainer.clientWidth;
+                const canvasWidth = waveformCanvas.width;
+                const maxOffset = containerWidth / 2;
+                const minOffset = -(canvasWidth - containerWidth / 2);
+                
+                waveformOffset = Math.max(minOffset, Math.min(maxOffset, waveformOffset));
+                waveformWrapper.style.transform = `translateX(${waveformOffset}px)`;
+                
+                updateTimeFromOffset();
+            }
+        }
+
+        function onMouseUp(e) {
+            if (isDragging) {
+                isDragging = false;
+                waveformContainer.classList.remove('dragging');
+            }
+        }
+
+        function updateTimeFromOffset() {
+            if (!mediaElement || !audioBuffer) return;
+            
+            const containerWidth = waveformContainer.clientWidth;
+            const centerOffset = containerWidth / 2;
+            const canvasWidth = waveformCanvas.width;
+            
+            const playbackPosition = centerOffset - waveformOffset;
+            const percent = playbackPosition / canvasWidth;
+            
+            mediaElement.currentTime = Math.max(0, Math.min(percent * mediaElement.duration, mediaElement.duration));
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Очистка предыдущих обработчиков
+            if (mediaElement) {
+                mediaElement.pause();
+                mediaElement.removeEventListener('loadedmetadata', onLoadedMetadata);
+                mediaElement.removeEventListener('timeupdate', updateTimecode);
+                mediaElement.removeEventListener('play', onPlay);
+                mediaElement.removeEventListener('pause', onPause);
+            }
+
+            isVideo = file.type.startsWith('video/');
+            
+            if (isVideo) {
+                videoContainer.style.display = 'block';
+                videoPlayer.src = URL.createObjectURL(file);
+                mediaElement = videoPlayer;
+            } else {
+                videoContainer.style.display = 'none';
+                if (!mediaElement || mediaElement.tagName === 'VIDEO') {
+                    const audio = new Audio();
+                    document.body.appendChild(audio);
+                    mediaElement = audio;
+                }
+                mediaElement.src = URL.createObjectURL(file);
+            }
+
+            mediaElement.addEventListener('loadedmetadata', onLoadedMetadata);
+            mediaElement.addEventListener('timeupdate', updateTimecode);
+            mediaElement.addEventListener('play', onPlay);
+            mediaElement.addEventListener('pause', onPause);
+
+            playerSection.style.display = 'block';
+            playPauseBtn.textContent = '▶ Воспроизвести';
+            loadAudioData(file);
+            
+            startAnimationLoop();
+        }
+
+        function startAnimationLoop() {
+            function animate() {
+                if (mediaElement && !mediaElement.paused && !isDragging) {
+                    updateWaveformPosition();
+                }
+                animationFrameId = requestAnimationFrame(animate);
+            }
+            
+            if (animationFrameId) {
+                cancelAnimationFrame(animationFrameId);
+            }
+            
+            animate();
+        }
+
+        function onLoadedMetadata() {
+            durationEl.textContent = formatTime(mediaElement.duration);
+        }
+
+        function onPlay() {
+            playPauseBtn.textContent = '⏸ Пауза';
+        }
+
+        function onPause() {
+            playPauseBtn.textContent = '▶ Воспроизвести';
+        }
+
+        async function loadAudioData(file) {
+            loading.style.display = 'block';
+            waveformCanvas.style.display = 'none';
+
+            if (!audioContext) {
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            }
+
+            const arrayBuffer = await file.arrayBuffer();
+            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+            
+            loading.style.display = 'none';
+            waveformCanvas.style.display = 'block';
+            drawWaveform();
+        }
+
+        function drawWaveform() {
+            if (!audioBuffer) return;
+
+            const canvas = waveformCanvas;
+            const ctx = canvas.getContext('2d');
+            const data = audioBuffer.getChannelData(0);
+            
+            const baseWidth = Math.max(window.innerWidth - 80, 800);
+            const width = baseWidth * zoomLevel;
+            const height = 200;
+            
+            canvas.width = width;
+            canvas.height = height;
+            canvas.style.width = width + 'px';
+            
+            waveformWrapper.style.width = width + 'px';
+
+            ctx.fillStyle = '#5a5ad8';
+            ctx.clearRect(0, 0, width, height);
+
+            const step = Math.ceil(data.length / width);
+            const amp = height / 2;
+
+            for (let i = 0; i < width; i++) {
+                let min = 1.0;
+                let max = -1.0;
+                
+                for (let j = 0; j < step; j++) {
+                    const datum = data[(i * step) + j];
+                    if (datum < min) min = datum;
+                    if (datum > max) max = datum;
+                }
+                
+                ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
+            }
+
+            updateWaveformPosition();
+        }
+
+        function changeZoom(factor) {
+            zoomLevel *= factor;
+            zoomLevel = Math.max(0.5, Math.min(zoomLevel, 10));
+            drawWaveform();
+        }
+
+        function togglePlayPause() {
+            if (!mediaElement) return;
+            
+            if (mediaElement.paused) {
+                mediaElement.play().catch(err => {
+                    console.error('Ошибка воспроизведения:', err);
+                    alert('Не удалось воспроизвести файл');
+                });
+            } else {
+                mediaElement.pause();
+            }
+        }
+
+        function changeSpeed() {
+            mediaElement.playbackRate = parseFloat(speedSelect.value);
+        }
+
+        function updateTimecode() {
+            const time = mediaElement.currentTime;
+            currentTimeEl.textContent = formatTime(time);
+        }
+
+        function updateWaveformPosition() {
+            if (!mediaElement || !audioBuffer || isDragging) return;
+            
+            const time = mediaElement.currentTime;
+            const duration = mediaElement.duration;
+            const percent = time / duration;
+            const canvasWidth = waveformCanvas.width;
+            
+            const playbackPosition = percent * canvasWidth;
+            const containerWidth = waveformContainer.clientWidth;
+            const centerOffset = containerWidth / 2;
+            
+            waveformOffset = centerOffset - playbackPosition;
+            waveformWrapper.style.transform = `translateX(${waveformOffset}px)`;
+        }
+
+        function seekToPosition(e) {
+            if (isDragging || e.target !== waveformContainer) return;
+            
+            const rect = waveformContainer.getBoundingClientRect();
+            const clickX = e.clientX - rect.left;
+            const containerWidth = waveformContainer.clientWidth;
+            const canvasWidth = waveformCanvas.width;
+            
+            const playbackPosition = clickX - waveformOffset;
+            const percent = playbackPosition / canvasWidth;
+            
+            mediaElement.currentTime = Math.max(0, Math.min(percent * mediaElement.duration, mediaElement.duration));
+        }
+
+        function formatTime(seconds) {
+            if (isNaN(seconds)) return '0:00.00';
+            const mins = Math.floor(seconds / 60);
+            const secs = Math.floor(seconds % 60);
+            const ms = Math.floor((seconds % 1) * 100);
+            return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
+        }
+
+        window.addEventListener('resize', () => {
+            if (audioBuffer) drawWaveform();
+        });
     </script>
-  </body>
+</body>
 </html>
