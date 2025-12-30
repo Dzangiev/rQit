@@ -3,490 +3,405 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Медиа плеер</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            background: #1a1a1a;
-            color: #fff;
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .upload-section {
-            margin-bottom: 30px;
-            padding: 20px;
-            background: #2a2a2a;
-            border-radius: 8px;
-        }
-
-        .upload-section input {
-            margin: 10px 0;
-            padding: 10px;
-            background: #3a3a3a;
-            border: none;
-            color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .video-container {
-            margin-bottom: 20px;
-            background: #000;
-            border-radius: 8px;
-            overflow: hidden;
-        }
-
-        video {
-            width: 100%;
-            max-height: 500px;
-            display: block;
-        }
-
-        .controls {
-            padding: 15px;
-            background: #2a2a2a;
-            border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .control-row {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 10px;
-        }
-
-        button {
-            padding: 10px 20px;
-            background: #5a5ad8;
-            border: none;
-            color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        button:hover {
-            background: #4a4ac8;
-        }
-
-        select {
-            padding: 10px;
-            background: #3a3a3a;
-            border: none;
-            color: #fff;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-
-        .timecode {
-            font-family: monospace;
-            font-size: 16px;
-        }
-
-        .waveform-container {
-            position: relative;
-            overflow: hidden;
-            background: #2a2a2a;
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-            height: 240px;
-            cursor: grab;
-        }
-
-        .waveform-container.dragging {
-            cursor: grabbing;
-        }
-
-        .waveform-wrapper {
-            position: absolute;
-            left: 0;
-            top: 20px;
-            transition: none;
-            will-change: transform;
-        }
-
-        canvas {
-            display: block;
-            pointer-events: none;
-        }
-
-        .playhead {
-            position: absolute;
-            width: 2px;
-            height: 100%;
-            background: #ff4444;
-            pointer-events: none;
-            z-index: 10;
-            left: 50%;
-            top: 0;
-            margin-left: -1px;
-            box-shadow: 0 0 10px rgba(255, 68, 68, 0.5);
-        }
-
-        .zoom-controls {
-            margin-bottom: 10px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #888;
-        }
-    </style>
+    <title>Нижнее меню</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="display-settings-modal.css">
 </head>
 <body>
-    <div class="container">
-        <div class="upload-section">
-            <h2>Загрузить медиа файл</h2>
-            <input type="file" id="fileInput" accept="audio/*,video/*">
+    <div class="panels">
+        <div id="content">
+            <div class="page active" id="page-map">
+                <div class="player-container">
+                    <!-- Top Bar -->
+                    <div class="player-top-bar" style="height: auto;">
+                        <label for="file-input" class="btn">
+                            <span class="icon icon-file"></span>
+                            <span id="file-name-text">Загрузить файл</span>
+                        </label>
+                        <input type="file" id="file-input" accept="audio/*,video/*" hidden>
+                    </div>
+
+                    <!-- Video Area -->
+                    <div class="player-video-area">
+                        <video id="main-video"></video>
+                    </div>
+
+                    <div id="player-bottom-section" class="hidden">
+                        <!-- Bottom Bar -->
+                        <div class="player-bottom-bar" style="height: auto;">
+                            <div class="table-dataset"><p class="text-display" id="text-display">Whereas disregard and contempt for</p></div>
+                            <div class="player-controls">
+                                <div class="zoom-controls flex d-row align-center">
+                                    <button id="zoom-out-btn" class="btn btn--small"><span class="icon icon-zoom-minus"></span></button>
+                                    <button id="zoom-in-btn" class="btn btn--small"><span class="icon icon-zoom-plus"></span></button>
+                                </div>
+                                <div class="flex d-row align-center">
+                                    <button id="speed-btn" class="btn btn--small">
+                                        <span class="icon icon-gauge"></span>
+                                        <span id="speed-text">1.0x</span>
+                                    </button>
+                                    <span id="time-display" class="time-display"><div>00:00:00.0</div><div style="color: #777;">/</div><div style="color: #777;">00:00:00.0</div></span>
+                                    <button id="play-pause-btn" class="btn btn--small">
+                                        <span class="icon icon-play"></span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Speed Selection Modal -->
+                        <div id="speed-modal" class="speed-modal hidden">
+                            <div class="speed-modal-content">
+                                <!-- Speed options will be generated by JS -->
+                            </div>
+                        </div>
+
+                        <!-- Waveform Visualizer -->
+                        <div id="waveform-container" class="waveform-container hidden">
+                            <div id="waveform-playhead" class="waveform-playhead"></div>
+                            <div id="waveform-track">
+                                <canvas id="waveform-canvas"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Marker Controls -->
+                        <div id="marker-controls" class="marker-controls">
+                            <button id="reset-markers-btn" class="btn--marker">
+                                <span class="icon icon-reset"></span>
+                            </button>
+                            <div class="marker-controls-center">
+                                <button id="prev-marker-btn" class="btn--marker">
+                                    <span class="icon icon-skip-back"></span>
+                                </button>
+                                <button id="add-marker-btn" class="btn--marker btn--marker-large">
+                                    <span class="icon icon-add-marker"></span>
+                                </button>
+                                <button id="next-marker-btn" class="btn--marker">
+                                    <span class="icon icon-skip-forward"></span>
+                                </button>
+                            </div>
+                            <button id="delete-marker-btn" class="btn--marker">
+                                <span class="icon icon-trash"></span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page" id="page-table">
+                <div class="table-page-container">
+                    <h1 class="table-title">Таблица</h1>
+                    <div class="table-controls-container">
+                        <div class="table-container">
+                            <table id="main-table">
+                                <thead>
+                                    <tr>
+                                        <th>
+                                            <div class="header-content">
+                                                Тайм-коды
+                                                <button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button>
+                                            </div>
+                                        </th>
+                                        <th>
+                                            <div class="header-content">
+                                                Arabian
+                                                <button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button>
+                                            </div>
+                                        </th>
+                                        <th>
+                                            <div class="header-content">
+                                                English
+                                                <button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button>
+                                            </div>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">00:00:06.5</div></div></td>
+                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div></div></td>
+                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">In the name of God, the Lord of Mercy, the Giver of Mercy!</div></div></td>
+                                    </tr>
+                                    <tr>
+                                        <td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content" contenteditable="true"></div></div></td>
+                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div></td>
+                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div></td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+
+                    </div>
+
+                    <div class="table-bottom-bar">
+                        <button class="btn btn--full-width" id="btn-add-manual">Добавить тайм-код</button>
+                        <button class="btn btn--full-width" id="btn-add-language">Добавить язык</button>
+                        <button class="btn btn--full-width" id="btn-clear-table">Очистить всю таблицу</button>
+                        <button class="btn btn--full-width" id="btn-add-row-bottom">Добавить строку</button>
+                        <button class="btn btn--full-width" id="btn-add-from-quran">Добавить из Корана</button>
+                    </div>
+                </div>
+            </div>
+            <div class="page" id="page-display-settings">
+                <div class="display-settings-container">
+                    <h1 class="display-settings-title">Настройка отображения</h1>
+                
+                    <div class="canvas-container">
+                        <canvas id="display-canvas"></canvas>
+                    </div>
+
+                    <div class="display-controls-area"> <!-- Container for all controls below canvas -->
+                        <div class="display-top-row-controls">
+                            <button id="display-settings-btn" class="btn btn--small"><span class="icon icon-gear"></span></button>
+                            <span id="display-time" class="time-display"><div>00:00:00.0</div><div style="color: #777;">/</div><div style="color: #777;">00:00:00.0</div></span>
+                        </div>
+                        <div class="display-bottom-row-controls">
+                            <div class="version-select-container">
+                                <select id="version-select" class="btn btn--nobg">
+                                    <option value="default">Дефолтная версия</option>
+                                </select>
+                            </div>
+                            <div class="display-buttons-right">
+                                <button id="display-prev-btn" class="btn btn--small"><span class="icon icon-skip-back"></span></button>
+                                <button id="display-play-pause-btn" class="btn btn--small"><span class="icon icon-play"></span></button>
+                                <button id="display-next-btn" class="btn btn--small"><span class="icon icon-skip-forward"></span></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="page" id="page-record">
+                <div class="record-page-container">
+                    <h1 class="record-title">Запись видео</h1>
+
+                    <!-- Recording Block -->
+                    <div class="record-block">
+                        <h2>Запись</h2>
+                        <button id="open-versions-modal-btn" class="btn btn--full-width">Выбрать версии</button>
+                        <button id="record-start-btn" class="btn btn--full-width btn--primary-action">Запись</button>
+                    </div>
+
+                    <!-- Progress Block -->
+                    <div id="record-progress-block" class="record-block hidden">
+                        <h2>Прогресс</h2>
+                        <div id="record-status-text"></div>
+                        <div id="record-stopwatch">00:00:00</div>
+                        <div class="progress-bar-container">
+                            <div id="record-progress-bar" class="progress-bar"></div>
+                        </div>
+                        <div id="record-percentage">0%</div>
+                    </div>
+
+                    <!-- Download Block -->
+                    <div class="record-block">
+                        <h2>Скачивание</h2>
+                        <button id="open-download-modal-btn" class="btn btn--full-width">Выбрать видео</button>
+                        <button id="download-selected-btn" class="btn btn--full-width btn--primary-action">Скачать</button>
+                    </div>
+
+                    <!-- Hidden container for recording canvases -->
+                    <div id="hidden-canvas-container" class="hidden"></div>
+                </div>
+            </div>
         </div>
+        <div class="navpanel">
+            <nav class="bottom-nav">
+                <div class="nav-indicator"></div>
+                <a href="#page-map" class="nav-item active" data-page="page-map">
+                    <div class="icon icon-map"></div>
+                </a>
+                <a href="#page-table" class="nav-item" data-page="page-table">
+                    <div class="icon icon-grid"></div>
+                </a>
+                <a href="#page-display-settings" class="nav-item" data-page="page-display-settings">
+                    <div class="icon icon-video"></div>
+                </a>
+                <a href="#page-record" class="nav-item" data-page="page-record">
+                    <div class="icon icon-film"></div>
+                </a>
+            </nav>
+        </div>
+    </div>
 
-        <div id="playerSection" style="display: none;">
-            <div class="video-container" id="videoContainer" style="display: none;">
-                <video id="videoPlayer" controls></video>
-            </div>
+    <script src="script.js"></script>
+    <script src="player.js"></script>
+    <script src="table.js"></script>
+    <script src="subtitles.js"></script>
+    <script src="waveform.js"></script>
+    <script type="module" src="display-settings.js"></script>
+    <script type="module" src="record.js"></script>
+    <script type="module" src="mediabunny.mjs"></script>
 
-            <div class="controls">
-                <div class="control-row">
-                    <button id="playPauseBtn">▶ Воспроизвести</button>
-                    <span class="timecode" id="currentTime">0:00.00</span>
-                    <span>/</span>
-                    <span class="timecode" id="duration">0:00.00</span>
-                    <label>Скорость:</label>
-                    <select id="speedSelect">
-                        <option value="0.25">0.25x</option>
-                        <option value="0.5">0.5x</option>
-                        <option value="0.75">0.75x</option>
-                        <option value="1" selected>1x</option>
-                        <option value="1.25">1.25x</option>
-                        <option value="1.5">1.5x</option>
-                        <option value="1.75">1.75x</option>
-                        <option value="2">2x</option>
-                    </select>
-                </div>
-            </div>
-
-            <div class="zoom-controls">
-                <button id="zoomIn">+ Увеличить</button>
-                <button id="zoomOut">- Уменьшить</button>
-                <button id="zoomReset">Сброс</button>
-            </div>
-
-            <div class="waveform-container" id="waveformContainer">
-                <div class="playhead" id="playhead"></div>
-                <div id="loading" class="loading">Загрузка визуализации...</div>
-                <div class="waveform-wrapper" id="waveformWrapper">
-                    <canvas id="waveformCanvas"></canvas>
-                </div>
+    <div id="confirmation-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p id="confirmation-message"></p>
+            <div class="modal-buttons">
+                <button id="confirm-btn" class="btn">Подтвердить</button>
+                <button id="cancel-btn" class="btn">Отмена</button>
             </div>
         </div>
     </div>
 
-    <script>
-        let audioContext;
-        let audioBuffer;
-        let mediaElement;
-        let isVideo = false;
-        let zoomLevel = 1;
-        let waveformOffset = 0;
-        let isDragging = false;
-        let dragStartX = 0;
-        let dragStartOffset = 0;
-        let animationFrameId = null;
+    <div id="manual-add-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p>Добавить тайм-код вручную</p>
+            <div class="manual-add-inputs">
+                <input type="number" id="manual-h" min="0" max="99" placeholder="HH">
+                <span>:</span>
+                <input type="number" id="manual-m" min="0" max="59" placeholder="MM">
+                <span>:</span>
+                <input type="number" id="manual-s" min="0" max="59" placeholder="SS">
+                <span>.</span>
+                <input type="number" id="manual-ds" min="0" max="9" placeholder="D">
+            </div>
+            <div class="modal-buttons">
+                <button id="manual-add-save-btn" class="btn">Сохранить</button>
+                <button id="manual-add-cancel-btn" class="btn">Отмена</button>
+            </div>
+        </div>
+    </div>
 
-        const fileInput = document.getElementById('fileInput');
-        const playerSection = document.getElementById('playerSection');
-        const videoContainer = document.getElementById('videoContainer');
-        const videoPlayer = document.getElementById('videoPlayer');
-        const playPauseBtn = document.getElementById('playPauseBtn');
-        const speedSelect = document.getElementById('speedSelect');
-        const currentTimeEl = document.getElementById('currentTime');
-        const durationEl = document.getElementById('duration');
-        const waveformCanvas = document.getElementById('waveformCanvas');
-        const waveformContainer = document.getElementById('waveformContainer');
-        const waveformWrapper = document.getElementById('waveformWrapper');
-        const playhead = document.getElementById('playhead');
-        const loading = document.getElementById('loading');
-        const zoomIn = document.getElementById('zoomIn');
-        const zoomOut = document.getElementById('zoomOut');
-        const zoomReset = document.getElementById('zoomReset');
+    <div id="quran-import-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p>Добавить из Корана</p>
+            <div class="quran-import-inputs">
+                <input type="number" id="quran-surah" placeholder="Сура">
+                <input type="number" id="quran-ayah-start" placeholder="Аят (начало)">
+                <input type="number" id="quran-ayah-end" placeholder="Аят (конец)">
+            </div>
+            <div class="modal-buttons">
+                <button id="quran-import-confirm-btn" class="btn">Подтвердить</button>
+                <button id="quran-import-cancel-btn" class="btn">Отмена</button>
+            </div>
+        </div>
+    </div>
 
-        fileInput.addEventListener('change', handleFileSelect);
-        playPauseBtn.addEventListener('click', togglePlayPause);
-        speedSelect.addEventListener('change', changeSpeed);
-        waveformContainer.addEventListener('mousedown', onMouseDown);
-        waveformContainer.addEventListener('mousemove', onMouseMove);
-        waveformContainer.addEventListener('mouseup', onMouseUp);
-        waveformContainer.addEventListener('mouseleave', onMouseUp);
-        waveformContainer.addEventListener('click', seekToPosition);
-        zoomIn.addEventListener('click', () => changeZoom(1.5));
-        zoomOut.addEventListener('click', () => changeZoom(0.67));
-        zoomReset.addEventListener('click', () => { zoomLevel = 1; drawWaveform(); });
-        
-        window.addEventListener('resize', () => {
-            if (audioBuffer) {
-                drawWaveform();
-                updateWaveformPosition();
-            }
-        });
+<div id="display-settings-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Настройки отображения</h2>
+            <div class="settings-grid">
+                <!-- Aspect Ratio -->
+                <div class="settings-item">
+                    <label for="aspect-ratio-select">Соотношение сторон</label>
+                    <select id="aspect-ratio-select" class="btn">
+                        <option value="9:16">9:16</option>
+                        <option value="16:9">16:9</option>
+                        <option value="1:1">1:1</option>
+                        <option value="3:4">3:4</option>
+                        <option value="4:3">4:3</option>
+                    </select>
+                </div>
+                <!-- Resolution -->
+                <div class="settings-item">
+                    <label for="resolution-select">Разрешение</label>
+                    <select id="resolution-select" class="btn">
+                        <option value="1080">1080p</option>
+                        <option value="720">720p</option>
+                        <option value="480">480p</option>
+                        <option value="360">360p</option>
+                    </select>
+                </div>
 
-        function onMouseDown(e) {
-            if (e.target === waveformCanvas || e.target === waveformWrapper) {
-                isDragging = true;
-                dragStartX = e.clientX;
-                dragStartOffset = waveformOffset;
-                waveformContainer.classList.add('dragging');
-                
-                if (mediaElement && !mediaElement.paused) {
-                    mediaElement.pause();
-                }
-            }
-        }
+                <!-- Primary Font Settings -->
+                <div class="settings-group">
+                    <h3>Основной шрифт (2 столбец)</h3>
+                    <div class="settings-item">
+                        <label for="primary-font-select">Шрифт</label>
+                        <select id="primary-font-select" class="btn">
+                            <option value="KFGQPC Uthmanic Script HAFS">KFGQPC</option>
+                            <option value="Inter var">Inter</option>
+                            <!-- Add other fonts here -->
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="primary-font-size-input">Размер</label>
+                        <input type="number" id="primary-font-size-input" class="btn" value="48">
+                    </div>
+                </div>
 
-        function onMouseMove(e) {
-            if (isDragging) {
-                e.preventDefault();
-                const deltaX = e.clientX - dragStartX;
-                waveformOffset = dragStartOffset + deltaX;
-                
-                // Ограничения для прокрутки
-                const containerWidth = waveformContainer.clientWidth;
-                const canvasWidth = waveformCanvas.width;
-                const maxOffset = containerWidth / 2;
-                const minOffset = -(canvasWidth - containerWidth / 2);
-                
-                waveformOffset = Math.max(minOffset, Math.min(maxOffset, waveformOffset));
-                waveformWrapper.style.transform = `translateX(${waveformOffset}px)`;
-                
-                updateTimeFromOffset();
-            }
-        }
+                <!-- Secondary Font Settings -->
+                <div class="settings-group">
+                    <h3>Дополнительный шрифт (3+ столбец)</h3>
+                    <div class="settings-item">
+                        <label for="secondary-font-select">Шрифт</label>
+                        <select id="secondary-font-select" class="btn">
+                            <option value="Inter var">Inter</option>
+                            <option value="KFGQPC Uthmanic Script HAFS">KFGQPC</option>
+                            <!-- Add other fonts here -->
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="secondary-font-size-input">Размер</label>
+                        <input type="number" id="secondary-font-size-input" class="btn" value="24">
+                    </div>
+                </div>
 
-        function onMouseUp(e) {
-            if (isDragging) {
-                isDragging = false;
-                waveformContainer.classList.remove('dragging');
-            }
-        }
+                <!-- Spacing -->
+                <div class="settings-item">
+                    <label for="text-spacing-input">Расстояние между текстами</label>
+                    <input type="number" id="text-spacing-input" class="btn" value="20">
+                </div>
 
-        function updateTimeFromOffset() {
-            if (!mediaElement || !audioBuffer) return;
-            
-            const containerWidth = waveformContainer.clientWidth;
-            const centerOffset = containerWidth / 2;
-            const canvasWidth = waveformCanvas.width;
-            
-            const playbackPosition = centerOffset - waveformOffset;
-            const percent = playbackPosition / canvasWidth;
-            
-            mediaElement.currentTime = Math.max(0, Math.min(percent * mediaElement.duration, mediaElement.duration));
-        }
+                <!-- Animation Settings -->
+                <div class="settings-group">
+                    <h3>Анимация текста</h3>
+                    <div class="settings-item">
+                        <label for="animation-type-select">Тип</label>
+                        <select id="animation-type-select" class="btn">
+                            <option value="fade">Появление/Исчезновение</option>
+                            <option value="none">Без анимации</option>
+                        </select>
+                    </div>
+                    <div class="settings-item">
+                        <label for="animation-duration-input">Длительность (сек)</label>
+                        <input type="number" id="animation-duration-input" class="btn" value="0.5" step="0.1" min="0">
+                    </div>
+                    <div class="settings-item" id="animation-easing-group">
+                        <label for="animation-easing-select">Плавность</label>
+                        <select id="animation-easing-select" class="btn">
+                            <option value="linear">Линейная</option>
+                            <option value="easeInQuad">Ease-In</option>
+                            <option value="easeOutQuad">Ease-Out</option>
+                            <option value="easeInOutQuad">Ease-In-Out</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-buttons">
+                <button id="settings-close-btn" class="btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
 
-        function handleFileSelect(e) {
-            const file = e.target.files[0];
-            if (!file) return;
+    <div id="record-versions-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Выбрать версии для записи</h2>
+            <div id="record-versions-list" class="scrollable-list">
+                <!-- Checkboxes will be populated by JS -->
+            </div>
+            <div class="modal-buttons">
+                <button id="record-versions-close-btn" class="btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
 
-            // Очистка предыдущих обработчиков
-            if (mediaElement) {
-                mediaElement.pause();
-                mediaElement.removeEventListener('loadedmetadata', onLoadedMetadata);
-                mediaElement.removeEventListener('timeupdate', updateTimecode);
-                mediaElement.removeEventListener('play', onPlay);
-                mediaElement.removeEventListener('pause', onPause);
-            }
+    <div id="download-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Выбрать видео для скачивания</h2>
+            <div id="download-videos-list" class="scrollable-list">
+                <p>Пока нет записанных видео.</p>
+            </div>
+            <div class="modal-buttons">
+                <button id="download-modal-close-btn" class="btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
 
-            isVideo = file.type.startsWith('video/');
-            
-            if (isVideo) {
-                videoContainer.style.display = 'block';
-                videoPlayer.src = URL.createObjectURL(file);
-                mediaElement = videoPlayer;
-            } else {
-                videoContainer.style.display = 'none';
-                if (!mediaElement || mediaElement.tagName === 'VIDEO') {
-                    const audio = new Audio();
-                    document.body.appendChild(audio);
-                    mediaElement = audio;
-                }
-                mediaElement.src = URL.createObjectURL(file);
-            }
-
-            mediaElement.addEventListener('loadedmetadata', onLoadedMetadata);
-            mediaElement.addEventListener('timeupdate', updateTimecode);
-            mediaElement.addEventListener('play', onPlay);
-            mediaElement.addEventListener('pause', onPause);
-
-            playerSection.style.display = 'block';
-            playPauseBtn.textContent = '▶ Воспроизвести';
-            loadAudioData(file);
-            
-            startAnimationLoop();
-        }
-
-        function startAnimationLoop() {
-            function animate() {
-                if (mediaElement && !mediaElement.paused && !isDragging) {
-                    updateWaveformPosition();
-                }
-                animationFrameId = requestAnimationFrame(animate);
-            }
-            
-            if (animationFrameId) {
-                cancelAnimationFrame(animationFrameId);
-            }
-            
-            animate();
-        }
-
-        function onLoadedMetadata() {
-            durationEl.textContent = formatTime(mediaElement.duration);
-        }
-
-        function onPlay() {
-            playPauseBtn.textContent = '⏸ Пауза';
-        }
-
-        function onPause() {
-            playPauseBtn.textContent = '▶ Воспроизвести';
-        }
-
-        async function loadAudioData(file) {
-            loading.style.display = 'block';
-            waveformCanvas.style.display = 'none';
-
-            if (!audioContext) {
-                audioContext = new (window.AudioContext || window.webkitAudioContext)();
-            }
-
-            const arrayBuffer = await file.arrayBuffer();
-            audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-            
-            loading.style.display = 'none';
-            waveformCanvas.style.display = 'block';
-            drawWaveform();
-        }
-
-        function drawWaveform() {
-            if (!audioBuffer) return;
-
-            const canvas = waveformCanvas;
-            const ctx = canvas.getContext('2d');
-            const data = audioBuffer.getChannelData(0);
-            
-            const baseWidth = Math.max(window.innerWidth - 80, 800);
-            const width = baseWidth * zoomLevel;
-            const height = 200;
-            
-            canvas.width = width;
-            canvas.height = height;
-            canvas.style.width = width + 'px';
-            
-            waveformWrapper.style.width = width + 'px';
-
-            ctx.fillStyle = '#5a5ad8';
-            ctx.clearRect(0, 0, width, height);
-
-            const step = Math.ceil(data.length / width);
-            const amp = height / 2;
-
-            for (let i = 0; i < width; i++) {
-                let min = 1.0;
-                let max = -1.0;
-                
-                for (let j = 0; j < step; j++) {
-                    const datum = data[(i * step) + j];
-                    if (datum < min) min = datum;
-                    if (datum > max) max = datum;
-                }
-                
-                ctx.fillRect(i, (1 + min) * amp, 1, Math.max(1, (max - min) * amp));
-            }
-
-            updateWaveformPosition();
-        }
-
-        function changeZoom(factor) {
-            zoomLevel *= factor;
-            zoomLevel = Math.max(0.5, Math.min(zoomLevel, 10));
-            drawWaveform();
-        }
-
-        function togglePlayPause() {
-            if (!mediaElement) return;
-            
-            if (mediaElement.paused) {
-                mediaElement.play().catch(err => {
-                    console.error('Ошибка воспроизведения:', err);
-                    alert('Не удалось воспроизвести файл');
-                });
-            } else {
-                mediaElement.pause();
-            }
-        }
-
-        function changeSpeed() {
-            mediaElement.playbackRate = parseFloat(speedSelect.value);
-        }
-
-        function updateTimecode() {
-            const time = mediaElement.currentTime;
-            currentTimeEl.textContent = formatTime(time);
-        }
-
-        function updateWaveformPosition() {
-            if (!mediaElement || !audioBuffer || isDragging) return;
-            
-            const time = mediaElement.currentTime;
-            const duration = mediaElement.duration;
-            const percent = time / duration;
-            const canvasWidth = waveformCanvas.width;
-            
-            const playbackPosition = percent * canvasWidth;
-            const containerWidth = waveformContainer.clientWidth;
-            const centerOffset = containerWidth / 2;
-            
-            waveformOffset = centerOffset - playbackPosition;
-            waveformWrapper.style.transform = `translateX(${waveformOffset}px)`;
-        }
-
-        function seekToPosition(e) {
-            if (isDragging || e.target !== waveformContainer) return;
-            
-            const rect = waveformContainer.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const containerWidth = waveformContainer.clientWidth;
-            const canvasWidth = waveformCanvas.width;
-            
-            const playbackPosition = clickX - waveformOffset;
-            const percent = playbackPosition / canvasWidth;
-            
-            mediaElement.currentTime = Math.max(0, Math.min(percent * mediaElement.duration, mediaElement.duration));
-        }
-
-        function formatTime(seconds) {
-            if (isNaN(seconds)) return '0:00.00';
-            const mins = Math.floor(seconds / 60);
-            const secs = Math.floor(seconds % 60);
-            const ms = Math.floor((seconds % 1) * 100);
-            return `${mins}:${secs.toString().padStart(2, '0')}.${ms.toString().padStart(2, '0')}`;
-        }
-
-        window.addEventListener('resize', () => {
-            if (audioBuffer) drawWaveform();
-        });
-    </script>
+    <div id="video-player-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <video id="video-player" controls></video>
+            <div class="modal-buttons">
+                <button id="video-player-close-btn" class="btn">Закрыть</button>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

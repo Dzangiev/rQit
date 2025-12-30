@@ -1,0 +1,1022 @@
+@font-face {
+    font-family: 'Inter var';
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('Fonts/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
+}
+
+@font-face {
+    font-family: 'Inter var';
+    font-style: italic;
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('Fonts/Inter-Italic-VariableFont_opsz,wght.ttf') format('truetype-variations');
+}
+
+@font-face {
+    font-family: 'KFGQPC Uthmanic Script HAFS';
+    src: url('Fonts/KFGQPC Uthmanic Script HAFS Regular.otf') format('opentype');
+    font-weight: normal;
+    font-style: normal;
+}
+
+/* --- Global and Layout --- */
+.hidden {
+    display: none;
+}
+
+body {
+    margin: 0;
+    font-family: 'Inter var', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #111111;
+    color: #ffffff;
+    box-sizing: border-box;
+    height: 100vh; /* Add */
+}
+
+#content .page {
+    display: none; /* Hide pages by default */
+    padding: 0px;
+    text-align: center;
+}
+
+#content .page.active {
+    display: block; /* Show only active page */
+}
+
+#content {
+    flex-grow: 1;
+    min-height: 0;
+}
+.flex {
+    display: flex;
+    gap: 8px;
+}
+.d-row {
+    flex-direction: row;
+}
+.align-center {
+    align-items: center;
+}
+/* --- Button --- */
+.btn {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    padding: 7px 7px;
+    background-color: #464034;
+    border-radius: 999px;
+    cursor: pointer;
+    border: 1px solid #A29F99;
+    font-size: 20px;
+    color: #ccc;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.btn--small {
+    padding: 4px 4px;
+    font-size: 16px;
+}
+
+.btn--full-width {
+    width: 100%;
+    justify-content: center;
+    white-space: wrap;
+}
+.btn--nobg {
+    background-color: transparent;
+}
+
+.btn--primary-action {
+    background-color: #38883A;
+    border-color: #9BC39C;
+    color: #fff;
+    font-weight: 500;
+}
+
+/* --- Player Page Layout --- */
+#page-map {
+    padding: 0;
+    height: 100%;
+}
+
+.panels {
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Change from 100vh */
+    max-height: 100%; /* Change from 100vh */
+}
+
+/* --- Bottom Navigation --- */
+.navpanel {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: auto;
+    padding: 12px;
+}
+.bottom-nav {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    border: 2.5px solid #444;
+    padding: 0;
+    z-index: 100;
+}
+
+.nav-indicator {
+    position: absolute;
+    top: -1px;
+    left: 0; /* Set by JS */
+    height: 76px;
+    width: 76px;
+    background-color: #444;
+    border-radius: 50%;
+    z-index: 0;
+    transition: left 0.2s cubic-bezier(0.2, 0.5, 0.3, 1);
+}
+
+.nav-item {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 73.5px;
+    height: 73.5px;
+    cursor: pointer;
+    text-decoration: none;
+    border-radius: 50%;
+    z-index: 1;
+}
+
+.nav-item .icon {
+    width: 50px;
+    height: 50px;
+    background-color: #8E8E93;
+    transition: background-color 0.3s ease;
+}
+
+.nav-item.active .icon {
+    background-color: #ffffff;
+}
+
+/* --- Player UI --- */
+.player-container {
+    display: flex;
+    flex-direction: column;
+    background-color: #111;
+    box-sizing: border-box;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.player-top-bar {
+    padding: 14px 12px;
+    flex-shrink: 0;
+}
+
+#file-name-text {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.player-video-area {
+    flex-grow: 1;
+    min-height: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 10px;
+}
+
+#main-video {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 15px;
+}
+
+.player-bottom-bar {
+    flex-shrink: 0;
+    text-align: center;
+}
+
+.table-dataset {
+  height: 80px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.text-display {
+  flex: 1;
+  min-width: 0;
+
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  line-clamp: 2;
+  overflow: hidden;
+
+  font-size: 18px;
+  line-height: 1.4;
+  color: #fff;
+}
+
+
+
+.player-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    margin: 12px;
+    border-radius: 999px;
+}
+
+.control-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    color: #fff;
+}
+
+.zoom-controls {
+    padding: 0;
+}
+
+.speed-btn {
+    gap: 5px;
+    font-size: 14px;
+    padding: 5px 10px;
+    background-color: #383838;
+    border-radius: 999px;
+}
+
+.time-display {
+    min-width: 188px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 16px;
+    color: #ccc;
+    white-space: nowrap;
+}
+
+/* --- Speed Modal --- */
+.speed-modal {
+    position: fixed;
+    bottom: 120px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #383838;
+    border: 1px solid #555;
+    border-radius: 15px;
+    padding: 10px;
+    z-index: 101;
+}
+
+.speed-modal.hidden {
+    display: none;
+}
+
+.speed-modal-content button {
+    background-color: transparent;
+    border: none;
+    color: #fff;
+    padding: 10px 20px;
+    width: 100%;
+    cursor: pointer;
+    border-radius: 8px;
+    text-align: center;
+    font-size: 16px;
+}
+
+.speed-modal-content button:hover {
+    background-color: #555;
+}
+
+.speed-modal-content button.active-speed {
+    background-color: #4444ff;
+    font-weight: bold;
+}
+
+/* --- Icon Base and Masks --- */
+.icon {
+    -webkit-mask-size: contain;
+    mask-size: contain;
+    -webkit-mask-position: center;
+    mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+    mask-repeat: no-repeat;
+}
+
+/* Player icons */
+.btn .icon { width: 40px; height: 40px; background-color: #ccc; }
+.btn--small .icon { width: 30px; height: 30px; background-color: #ccc; }
+.control-btn .icon { width: 30px; height: 30px; background-color: #fff; }
+.speed-btn .icon { width: 24px; height: 24px; }
+.play-btn .icon { width: 35px; height: 35px; }
+
+/* Icon file masks */
+.icon-file { -webkit-mask-image: url('icons/File.svg'); mask-image: url('icons/File.svg'); }
+.icon-zoom-minus { -webkit-mask-image: url('icons/MagnifyingGlassMinus.svg'); mask-image: url('icons/MagnifyingGlassMinus.svg'); }
+.icon-zoom-plus { -webkit-mask-image: url('icons/MagnifyingGlassPlus.svg'); mask-image: url('icons/MagnifyingGlassPlus.svg'); }
+.icon-gauge { -webkit-mask-image: url('icons/Gauge.svg'); mask-image: url('icons/Gauge.svg'); }
+.icon-play { -webkit-mask-image: url('icons/Play.svg'); mask-image: url('icons/Play.svg'); }
+.icon-pause { -webkit-mask-image: url('icons/Pause.svg'); mask-image: url('icons/Pause.svg'); }
+.icon-grid { -webkit-mask-image: url('icons/GridFour.svg'); mask-image: url('icons/GridFour.svg'); }
+.icon-video { -webkit-mask-image: url('icons/Video.svg'); mask-image: url('icons/Video.svg'); }
+.icon-map { -webkit-mask-image: url('icons/MapPinSimpleArea.svg'); mask-image: url('icons/MapPinSimpleArea.svg'); }
+.icon-film { -webkit-mask-image: url('icons/FilmStrip.svg'); mask-image: url('icons/FilmStrip.svg'); }
+.icon-plus { -webkit-mask-image: url('icons/Plus.svg'); mask-image: url('icons/Plus.svg'); }
+.icon-x { -webkit-mask-image: url('icons/X.svg'); mask-image: url('icons/X.svg'); }
+
+/* --- Confirmation Modal --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+.modal-content {
+    background-color: #2c2c2e;
+    padding: 20px;
+    border-radius: 14px;
+    text-align: center;
+    border: 1px solid #444;
+}
+
+.modal-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+#record-versions-modal .modal-content {
+    width: 90%;
+    max-width: 400px;
+}
+
+.scrollable-list {
+    max-height: 80vh;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    background-color: #1c1c1e;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 15px;
+    text-align: left;
+}
+
+.scrollable-list label {
+    display: block;
+    padding: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.scrollable-list label:hover {
+    background-color: #333;
+}
+
+/* --- Manual Add Modal --- */
+.manual-add-inputs {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    margin-top: 15px;
+}
+
+.manual-add-inputs input {
+    width: 60px;
+    padding: 8px;
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    color: white;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 16px;
+    -moz-appearance: textfield; /* Firefox */
+}
+
+.manual-add-inputs input::-webkit-outer-spin-button,
+.manual-add-inputs input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.manual-add-inputs span {
+    font-size: 20px;
+    font-weight: bold;
+    color: #888;
+}
+
+/* --- Waveform Visualizer --- */
+.waveform-container {
+    height: 83px;
+    min-height: 83px;
+    max-height: 83px;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    border-radius: 10px;
+}
+
+.waveform-container.hidden {
+    display: none;
+}
+
+.waveform-playhead {
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 3px;
+    height: 70px;
+    background-color: white;
+    z-index: 2;
+    border-radius: 10px;
+}
+
+#waveform-track {
+    position: absolute;
+    top: 9px;
+    left: 0;
+    height: 100%;
+    background-color: #3A3075;
+    border-radius: 8px;
+    height: 65px;
+    will-change: transform; /* Performance optimization */
+}
+
+#waveform-canvas {
+    display: block;
+    height: 100%;
+    width: 100%;
+}
+
+/* --- Marker Controls --- */
+#marker-controls {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 15px 0;
+}
+
+.marker-controls-center {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.btn--marker {
+    background-color: #38883A;
+    border: 1px solid #9BC39C;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: background-color 0.2s, border-color 0.2s;
+    flex-shrink: 0;
+}
+
+.btn--marker:not(:disabled):active {
+    filter: brightness(0.8);
+}
+
+.btn--marker:disabled {
+    background-color: #244125;
+    border-color: #91A092;
+    cursor: not-allowed;
+}
+
+.btn--marker .icon {
+    width: 30px; /* Default icon size for smaller buttons */
+    height: 30px; /* Default icon size for smaller buttons */
+    background-color: #fff; /* White icon color */
+    transition: background-color 0.2s;
+}
+
+.btn--marker:disabled .icon {
+    background-color: #ccc; /* Dimmed icon color when disabled */
+}
+
+/* Specific sizes for buttons */
+.btn--marker {
+    width: 52px;
+    height: 52px;
+}
+
+.btn--marker-large {
+    width: 72px;
+    height: 72px;
+}
+
+/* Specific icon masks */
+.icon-reset { -webkit-mask-image: url('icons/ArrowClockwise.svg'); mask-image: url('icons/ArrowClockwise.svg'); }
+.icon-skip-back { -webkit-mask-image: url('icons/SkipBack.svg'); mask-image: url('icons/SkipBack.svg'); }
+.icon-add-marker { -webkit-mask-image: url('icons/MapPinSimple.svg'); mask-image: url('icons/MapPinSimple.svg'); }
+.icon-skip-forward { -webkit-mask-image: url('icons/SkipForward.svg'); mask-image: url('icons/SkipForward.svg'); }
+.icon-trash { -webkit-mask-image: url('icons/Trash.svg'); mask-image: url('icons/Trash.svg'); }
+
+
+/* --- Table Page --- */
+
+#page-table {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.table-page-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.table-title {
+    font-size: 32px;
+    font-weight: 500;
+    margin: 0;
+    padding-top: 20px;
+    flex-shrink: 0;
+}
+
+.table-controls-container {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    flex-grow: 1;
+    overflow: hidden; /* This is important for scrolling content inside */
+    height: 0; /* Allows flex-grow to work properly with overflow */
+    justify-content: center;
+    font-size: 14.5px;
+    padding-bottom: 5px;
+}
+
+.table-container {
+    overflow: auto;
+    border: 1px solid #444;
+    max-width: 90vw;
+    width: 100%;
+    height: 100%; /* Ensure it takes full height of its flexible parent */
+}
+
+#main-table {
+    border-collapse: collapse;
+    color: white;
+    width: 100%;
+}
+
+#main-table th,
+#main-table td {
+    border: 1px solid #444;
+    padding: 0;
+    min-width: 150px;
+}
+
+#main-table th {
+    background-color: #333;
+}
+
+.header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+}
+
+.cell-content-wrapper {
+    display: flex;
+    align-items: center;
+    height: 100%;
+}
+
+.cell-content {
+    padding: 8px;
+    flex-grow: 1;
+    outline: none;
+}
+
+.btn-delete-col, .btn-delete-row {
+    background-color: transparent;
+    border: none;
+}
+
+.btn-add-col, .btn-add-row {
+    background-color: transparent;
+    border: none;
+}
+
+.table-bottom-bar {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    padding: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.icon-plus { -webkit-mask-image: url('icons/Plus.svg'); mask-image: url('icons/Plus.svg'); }
+.icon-x { -webkit-mask-image: url('icons/X.svg'); mask-image: url('icons/X.svg'); }
+/* --- Display Settings Page --- */
+.display-settings-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 20px 12px 12px 12px;
+    box-sizing: border-box;
+    gap: 15px; /* Space between title, canvas, and controls area */
+}
+
+#page-display-settings {
+    height: 100%;
+}
+
+.display-settings-title {
+    font-size: 32px;
+    font-weight: 500;
+    margin: 0;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.canvas-container {
+    flex-grow: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 0;
+}
+
+#display-canvas {
+    background-color: #000;
+    border: 1px solid #444;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    border-radius: 15px;
+}
+
+.display-controls-area { /* New container for all controls */
+    display: flex;
+    flex-direction: column;
+    gap: 10px; /* Space between the two control rows */
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.display-top-row-controls,
+.display-bottom-row-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+}
+
+.display-buttons-right { /* Keep for grouping playback buttons */
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Button sizing */
+#display-settings-btn,
+#display-prev-btn, 
+#display-next-btn, 
+#display-play-pause-btn {
+    width: 52px;
+    height: 52px;
+    padding: 4px;
+    justify-content: center;
+}
+
+#version-select {
+    -webkit-appearance: none;
+    appearance: none;
+    padding-right: 30px; /* Space for arrow */
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 16px;
+    height: 52px;
+    padding-left: 15px;
+    background-color: #444;
+}
+
+
+/* Fix for dropdown width */
+.display-bottom-row-controls .version-select-container {
+    flex-grow: 1; /* Allow the container to grow */
+    margin-right: 20px; /* Add some space between dropdown and playback buttons */
+}
+
+#version-select {
+    width: 100%; /* Make the select element fill its container */
+}
+.icon-gear { -webkit-mask-image: url('icons/GearSix.svg'); mask-image: url('icons/GearSix.svg'); }
+
+/* Playback button colors */
+#display-prev-btn, #display-next-btn, #display-play-pause-btn {
+    background-color: #38883A;
+    border: 1px solid #9BC39C;
+    border-radius: 50%;
+}
+
+#display-prev-btn .icon, #display-next-btn .icon, #display-play-pause-btn .icon {
+    background-color: #fff;
+}
+
+#display-prev-btn:disabled, #display-next-btn:disabled {
+    background-color: #244125;
+    border-color: #91A092;
+    cursor: not-allowed;
+}
+
+#display-prev-btn:disabled .icon, #display-next-btn:disabled .icon {
+    background-color: #ccc;
+}
+
+/* --- Record Page --- */
+#page-record {
+    height: 100%;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+}
+
+.record-page-container {
+    display: flex;
+    flex-direction: column;
+    padding: 20px 12px;
+    gap: 25px;
+}
+
+.record-title {
+    font-size: 32px;
+    font-weight: 500;
+    margin: 0;
+    text-align: center;
+}
+
+.record-block {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 15px;
+    background-color: #2c2c2e;
+    border-radius: 14px;
+    border: 1px solid #444;
+}
+
+.record-block h2 {
+    font-size: 20px;
+    margin: 0;
+    text-align: left;
+    border-bottom: 1px solid #555;
+    padding-bottom: 10px;
+}
+
+.dropdown-check-container {
+    position: relative;
+}
+
+.custom-select-like {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 15px;
+    background-color: #444;
+    border: 1px solid #555;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    color: #ccc;
+}
+
+.custom-select-like::after {
+    content: '';
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+}
+
+.dropdown-check-list {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background-color: #3b3b3e;
+    border: 1px solid #555;
+    border-radius: 10px;
+    padding: 10px;
+    z-index: 100;
+    max-height: 200px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 5px;
+}
+
+.dropdown-check-list label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+}
+
+/* Progress Block */
+#record-status-text {
+    text-align: center;
+    font-size: 16px;
+    min-height: 20px;
+}
+
+#record-stopwatch {
+    text-align: center;
+    font-size: 24px;
+    font-weight: bold;
+    letter-spacing: 2px;
+}
+
+.progress-bar-container {
+    width: 100%;
+    height: 20px;
+    background-color: #1c1c1e;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.1s linear;
+}
+
+#record-percentage {
+    text-align: center;
+    font-size: 14px;
+}
+
+/* Video List Item in Download Modal */
+.video-list-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 5px 0;
+}
+
+.video-list-item label {
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+}
+
+.video-list-item input[type="checkbox"] {
+    margin-right: 10px;
+}
+
+.play-video-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.play-video-btn img {
+    width: 20px;
+    height: 20px;
+}
+
+/* Video Player Modal */
+#video-player-modal .modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+#video-player {
+    width: 100%;
+    flex-grow: 1;
+    background-color: #000;
+    object-fit: contain;
+    min-height: 0; /* Important for flexbox children */
+}
+
+/* Display Settings Modal Specific Styles */
+#display-settings-modal .modal-content {
+    max-width: 90vw;
+    max-height: 90vh;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    text-align: left; /* Adjust text alignment for settings content */
+}
+
+#display-settings-modal h2 {
+    text-align: center;
+    flex-shrink: 0;
+    margin-bottom: 15px;
+}
+
+#display-settings-modal .modal-buttons {
+    flex-shrink: 0; /* Prevent buttons from shrinking */
+    margin-top: 15px; /* Add some space above the buttons */
+}
+
+.settings-grid {
+    flex-grow: 1; /* Allow the grid to take available space */
+    overflow-y: auto; /* Enable vertical scrolling */
+    display: grid;
+    grid-template-columns: 1fr; /* Single column layout for items */
+    gap: 20px;
+    padding: 10px; /* Add some padding inside the scrollable area */
+    margin-bottom: 15px; /* Space between content and buttons */
+}
+
+.settings-group {
+    border: 1px solid #444;
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.settings-group h3 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-size: 18px;
+    color: #ccc;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+}
+
+.settings-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.settings-item label {
+    flex-shrink: 0;
+    margin-right: 15px;
+}
+
+.settings-item .btn,
+.settings-item input[type="number"] {
+    flex-grow: 1; /* Allow inputs/selects to take available space */
+    max-width: 150px; /* Limit their max width */
+    text-align: center;
+    background-color: #444;
+    border-color: #555;
+    color: #fff;
+    padding: 8px 12px;
+}

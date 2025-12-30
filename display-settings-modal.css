@@ -1,0 +1,47 @@
+/* --- Display Settings Modal --- */
+#display-settings-modal .modal-content {
+    width: 90%;
+    max-width: 500px;
+}
+
+#display-settings-modal h2 {
+    margin-top: 0;
+    margin-bottom: 20px;
+}
+
+.settings-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+.settings-item, .settings-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    text-align: left;
+}
+
+.settings-group h3 {
+    font-size: 16px;
+    margin: 0;
+    border-bottom: 1px solid #555;
+    padding-bottom: 5px;
+    color: #ccc;
+}
+
+.settings-item label {
+    font-size: 14px;
+    color: #aaa;
+}
+
+#display-settings-modal select,
+#display-settings-modal input {
+    width: 100%;
+    box-sizing: border-box;
+    background-color: #1c1c1e;
+    border: 1px solid #444;
+    color: white;
+    padding: 8px;
+    border-radius: 6px;
+}
