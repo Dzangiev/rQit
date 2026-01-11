@@ -171,27 +171,53 @@ document.addEventListener('DOMContentLoaded', () => {
         const getSupportedMimeType = () => {
             const types = ['video/mp4;codecs=avc1.42E01E', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
             for (const type of types) {
-                if (MediaRecorder.isTypeSupported(type)) return type;
+                if (MediaRecorder.isTypeSupported(type)) {
+                    console.log(`Using supported MIME type: ${type}`);
+                    return type;
+                }
             }
+            console.log('No preferred MIME type supported, letting browser decide.');
             return '';
         };
 
         const mimeType = getSupportedMimeType();
-        if (!MediaRecorder) return reject(new Error('MediaRecorder API not supported.'));
+        if (!window.MediaRecorder) {
+            return reject(new Error('MediaRecorder API not supported on this browser.'));
+        }
         
         try {
             mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: BITRATE });
         } catch(e) {
+            console.error("MediaRecorder instantiation failed:", e);
             return reject(e);
         }
 
         recordedChunks = [];
-        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) recordedChunks.push(event.data); };
-        mediaRecorder.onerror = (event) => reject(event.error);
+        mediaRecorder.onstart = () => {
+            console.log('COMPATIBLE MODE: MediaRecorder started successfully.');
+        };
+        mediaRecorder.ondataavailable = (event) => {
+            console.log(`COMPATIBLE MODE: data available, size: ${event.data.size}`);
+            if (event.data.size > 0) {
+                recordedChunks.push(event.data);
+            }
+        };
+        mediaRecorder.onerror = (event) => {
+            console.error('COMPATIBLE MODE: MediaRecorder error:', event.error);
+            reject(event.error);
+        };
         mediaRecorder.onstop = () => {
+            console.log(`COMPATIBLE MODE: MediaRecorder stopped. Chunks recorded: ${recordedChunks.length}`);
             const blob = new Blob(recordedChunks, { type: mimeType.split(';')[0] || 'video/webm' });
             cancelAnimationFrame(animationFrameId);
-            resolve(blob);
+
+            if (blob.size === 0) {
+                console.error('COMPATIBLE MODE: Recording failed, blob is empty.');
+                reject(new Error('Recording resulted in an empty file. The browser may not support canvas recording properly.'));
+            } else {
+                console.log(`COMPATIBLE MODE: Blob created successfully, size: ${blob.size}`);
+                resolve(blob);
+            }
         };
 
         let startTime = null;
@@ -201,7 +227,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const elapsed = (timestamp - startTime) / 1000;
 
             if (elapsed >= duration) {
-                if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+                if (mediaRecorder.state === 'recording') {
+                    mediaRecorder.stop();
+                }
                 return;
             }
             
