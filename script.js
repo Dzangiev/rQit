@@ -1,4 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Set viewport height unit
+    function setVhVariable() {
+        let vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+    }
+
+    // Set on initial load
+    setVhVariable();
+
+    // Set on resize
+    window.addEventListener('resize', setVhVariable);
+    
     const navItems = document.querySelectorAll('.nav-item');
     const pages = document.querySelectorAll('.page');
     const indicator = document.querySelector('.nav-indicator');

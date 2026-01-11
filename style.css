@@ -31,7 +31,7 @@ body {
     background-color: #111111;
     color: #ffffff;
     box-sizing: border-box;
-    height: 100vh; /* Add */
+    height: calc(var(--vh, 1vh) * 100);
 }
 
 #content .page {
