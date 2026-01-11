@@ -122,7 +122,7 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
-    background-color: rgba(255, 255, 255, 0.1);
+    background-color: #292929;
     border-radius: 999px;
     border: 2.5px solid #444;
     padding: 0;
@@ -1019,4 +1019,80 @@ body {
     border-color: #555;
     color: #fff;
     padding: 8px 12px;
+}
+
+/* --- Record Page Redesign --- */
+.flex-grow {
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.record-page-container.flex-grow {
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+
+.record-block-controls {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.record-block-controls .btn--full-width {
+    flex-grow: 1;
+    width: auto; /* Reset width to allow flex-grow to work */
+}
+
+.btn--square {
+    width: 52px;
+    height: 52px;
+    padding: 4px;
+    justify-content: center;
+    flex-shrink: 0;
+    border-radius: 12px; /* Less rounded for a square-ish look */
+}
+
+.btn--square .icon {
+    width: 35px;
+    height: 35px;
+    background-color: #fff;
+}
+
+.icon-download { -webkit-mask-image: url('icons/DownloadSimple.svg'); mask-image: url('icons/DownloadSimple.svg'); }
+
+
+/* --- Progress Block Redesign --- */
+#record-progress-block {
+    gap: 10px;
+}
+
+.progress-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 16px;
+    color: #ccc;
+}
+
+#record-stopwatch {
+    font-size: 20px;
+    font-weight: 500;
+    text-align: left;
+    flex-grow: 1;
+    margin-left: 15px;
+}
+
+#record-status-text {
+    min-height: initial;
+    text-align: left;
+}
+
+#record-percentage {
+    font-size: 16px;
+    font-weight: 500;
+    text-align: right;
+}
+
+.progress-bar-container {
+    height: 10px;
 }

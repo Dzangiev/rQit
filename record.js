@@ -5,26 +5,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const page = document.getElementById('page-record');
     if (!page) return;
 
-    // --- Main Page Buttons ---
     const openVersionsModalBtn = document.getElementById('open-versions-modal-btn');
     const recordStartBtn = document.getElementById('record-start-btn');
     const openDownloadModalBtn = document.getElementById('open-download-modal-btn');
     const downloadBtn = document.getElementById('download-selected-btn');
-
-    // --- Modals & Lists ---
     const recordVersionsModal = document.getElementById('record-versions-modal');
     const recordVersionsList = document.getElementById('record-versions-list');
     const recordVersionsCloseBtn = document.getElementById('record-versions-close-btn');
-    
     const downloadModal = document.getElementById('download-modal');
     const downloadVideosList = document.getElementById('download-videos-list');
     const downloadModalCloseBtn = document.getElementById('download-modal-close-btn');
-
     const videoPlayerModal = document.getElementById('video-player-modal');
     const videoPlayer = document.getElementById('video-player');
     const videoPlayerCloseBtn = document.getElementById('video-player-close-btn');
-
-    // --- Progress & Other ---
     const progressBlock = document.getElementById('record-progress-block');
     const statusText = document.getElementById('record-status-text');
     const stopwatchEl = document.getElementById('record-stopwatch');
@@ -42,49 +35,47 @@ document.addEventListener('DOMContentLoaded', () => {
     let stopwatchInterval = null;
     let stopwatchTime = 0;
     let currentVideoUrl = null;
+    let mediaRecorder;
+    let recordedChunks = [];
+    let animationFrameId;
 
-    // --- UI Handlers ---
+    // --- Config ---
+    const FRAME_RATE = 30;
+    const BITRATE = 2500000;
+
+    // --- UI Handlers & Utils ---
     openVersionsModalBtn.addEventListener('click', () => recordVersionsModal.classList.remove('hidden'));
     recordVersionsCloseBtn.addEventListener('click', () => recordVersionsModal.classList.add('hidden'));
     openDownloadModalBtn.addEventListener('click', () => downloadModal.classList.remove('hidden'));
     downloadModalCloseBtn.addEventListener('click', () => downloadModal.classList.add('hidden'));
-
     videoPlayerCloseBtn.addEventListener('click', () => {
         videoPlayerModal.classList.add('hidden');
         videoPlayer.pause();
-        if (currentVideoUrl) {
-            URL.revokeObjectURL(currentVideoUrl);
-            currentVideoUrl = null;
-        }
+        if (currentVideoUrl) URL.revokeObjectURL(currentVideoUrl);
+        currentVideoUrl = null;
         videoPlayer.src = '';
     });
+    
+    const isMobile = () => /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
 
-    // --- Utility Functions ---
-    const showConfirmation = (message) => {
-        return new Promise((resolve) => {
-            confirmationMessage.textContent = message;
-            confirmationModal.classList.remove('hidden');
-            const onConfirm = () => {
-                confirmationModal.classList.add('hidden');
-                confirmBtn.removeEventListener('click', onConfirm);
-                cancelBtn.removeEventListener('click', onCancel);
-                resolve(true);
-            };
-            const onCancel = () => {
-                confirmationModal.classList.add('hidden');
-                confirmBtn.removeEventListener('click', onConfirm);
-                cancelBtn.removeEventListener('click', onCancel);
-                resolve(false);
-            };
-            confirmBtn.addEventListener('click', onConfirm);
-            cancelBtn.addEventListener('click', onCancel);
-        });
-    };
+    const showConfirmation = (message) => new Promise((resolve) => {
+        confirmationMessage.textContent = message;
+        confirmationModal.classList.remove('hidden');
+        const onConfirm = () => { resolve(true); cleanup(); };
+        const onCancel = () => { resolve(false); cleanup(); };
+        const cleanup = () => {
+            confirmationModal.classList.add('hidden');
+            confirmBtn.removeEventListener('click', onConfirm);
+            cancelBtn.removeEventListener('click', onCancel);
+        };
+        confirmBtn.addEventListener('click', onConfirm);
+        cancelBtn.addEventListener('click', onCancel);
+    });
     
     const formatStopwatch = (time) => {
-        const h = Math.floor(time / 3600).toString().padStart(2, '0');
-        const m = Math.floor((time % 3600) / 60).toString().padStart(2, '0');
-        const s = Math.floor(time % 60).toString().padStart(2, '0');
+        const h = String(Math.floor(time / 3600)).padStart(2, '0');
+        const m = String(Math.floor((time % 3600) / 60)).padStart(2, '0');
+        const s = String(Math.floor(time % 60)).padStart(2, '0');
         return `${h}:${m}:${s}`;
     };
 
@@ -99,27 +90,16 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     };
 
-    const getTimestamp = () => {
-        const d = new Date();
-        const year = d.getFullYear();
-        const month = (d.getMonth() + 1).toString().padStart(2, '0');
-        const day = d.getDate().toString().padStart(2, '0');
-        const hour = d.getHours().toString().padStart(2, '0');
-        const minute = d.getMinutes().toString().padStart(2, '0');
-        return `${year}-${month}-${day}_${hour}-${minute}`;
-    };
-
-    // --- Page Setup ---
+    const getTimestamp = () => new Date().toISOString().replace(/[:.]/g, '-');
+    
     const setupRecordPage = () => {
         if (!window.Subtitles) return;
         window.Subtitles.parseTable();
         const headers = window.Subtitles.getHeaders();
         recordVersionsList.innerHTML = '';
-
         const defaultLabel = document.createElement('label');
         defaultLabel.innerHTML = `<input type="checkbox" value="Дефолтная версия" data-index="1" /> Дефолтная версия`;
         recordVersionsList.appendChild(defaultLabel);
-
         if (headers.length > 2) {
             headers.slice(2).forEach((header, index) => {
                 const label = document.createElement('label');
@@ -129,7 +109,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
     
-    // --- Recording Logic ---
     const startStopwatch = () => {
         stopwatchTime = 0;
         stopwatchEl.textContent = formatStopwatch(stopwatchTime);
@@ -139,221 +118,252 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 1000);
     };
 
-    const stopStopwatch = () => {
-        clearInterval(stopwatchInterval);
-    };
+    const stopStopwatch = () => clearInterval(stopwatchInterval);
 
-    const recordVersion = async (job, subtitles, duration, timestampStr, onProgress) => {
-        const canvas = job.canvas;
+    // --- Recording Logic ---
+
+    // FAST MODE (Desktop): Uses mediabunny for accelerated offline rendering
+    const recordVersion_Fast = async (job, subtitles, duration, timestampStr, onProgress) => {
+        const { canvas, textIndex, name } = job;
         const ctx = canvas.getContext('2d');
         const drawText = window.DisplaySettings.createDrawTextFunction(canvas, ctx);
-
-        const FRAME_RATE = 30;
-        const BITRATE = 5_000_000;
 
         const output = new Output({
             format: new Mp4OutputFormat(),
             target: new BufferTarget()
         });
-        const videoSource = new CanvasSource(canvas, { codec: 'avc', bitrate: BITRATE });
+        const videoSource = new CanvasSource(canvas, { codec: 'avc', bitrate: 5_000_000 });
         output.addVideoTrack(videoSource);
         await output.start();
 
         const totalFrames = Math.floor(duration * FRAME_RATE);
-        
         for (let i = 0; i < totalFrames; i++) {
             const timestamp = i / FRAME_RATE;
-            
             const activeSubtitleIndex = subtitles.findIndex(sub => timestamp < sub.time);
-            
-            let primaryText = '';
-            let secondaryText = '';
-            let opacity = 0;
-
+            let primaryText = '', secondaryText = '', opacity = 0;
             if (activeSubtitleIndex !== -1) {
                 const activeSub = subtitles[activeSubtitleIndex];
                 const segmentStartTime = (activeSubtitleIndex > 0) ? subtitles[activeSubtitleIndex - 1].time : 0;
-                const segmentEndTime = activeSub.time;
-
-                opacity = window.DisplaySettings.calculateOpacity(timestamp, segmentStartTime, segmentEndTime);
-
+                opacity = window.DisplaySettings.calculateOpacity(timestamp, segmentStartTime, activeSub.time);
                 if (opacity > 0) {
                     primaryText = activeSub.texts[0] || '';
-                    if (job.textIndex >= 2) {
-                        secondaryText = activeSub.texts[job.textIndex - 1] || '';
-                    }
+                    if (textIndex >= 2) secondaryText = activeSub.texts[textIndex - 1] || '';
+                }
+            }
+            drawText(primaryText, secondaryText, opacity);
+            await videoSource.add(timestamp, 1 / FRAME_RATE);
+            if (i % 10 === 0) onProgress(i / totalFrames);
+        }
+        
+        onProgress(1);
+        await output.finalize();
+
+        return { name: `${name}_${timestampStr}.mp4`, blob: new Blob([output.target.buffer], { type: 'video/mp4' }) };
+    };
+
+    // COMPATIBLE MODE (Mobile): Uses MediaRecorder for real-time, reliable rendering
+    const recordVersion_Compatible = (job, subtitles, duration) => new Promise((resolve, reject) => {
+        const { canvas, textIndex } = job;
+        const ctx = canvas.getContext('2d');
+        const drawText = window.DisplaySettings.createDrawTextFunction(canvas, ctx);
+        const stream = canvas.captureStream(FRAME_RATE);
+
+        const getSupportedMimeType = () => {
+            const types = ['video/mp4;codecs=avc1.42E01E', 'video/webm;codecs=vp9,opus', 'video/webm;codecs=vp8,opus', 'video/webm'];
+            for (const type of types) {
+                if (MediaRecorder.isTypeSupported(type)) return type;
+            }
+            return '';
+        };
+
+        const mimeType = getSupportedMimeType();
+        if (!MediaRecorder) return reject(new Error('MediaRecorder API not supported.'));
+        
+        try {
+            mediaRecorder = new MediaRecorder(stream, { mimeType, videoBitsPerSecond: BITRATE });
+        } catch(e) {
+            return reject(e);
+        }
+
+        recordedChunks = [];
+        mediaRecorder.ondataavailable = (event) => { if (event.data.size > 0) recordedChunks.push(event.data); };
+        mediaRecorder.onerror = (event) => reject(event.error);
+        mediaRecorder.onstop = () => {
+            const blob = new Blob(recordedChunks, { type: mimeType.split(';')[0] || 'video/webm' });
+            cancelAnimationFrame(animationFrameId);
+            resolve(blob);
+        };
+
+        let startTime = null;
+        mediaRecorder.start();
+        const render = (timestamp) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = (timestamp - startTime) / 1000;
+
+            if (elapsed >= duration) {
+                if (mediaRecorder.state === 'recording') mediaRecorder.stop();
+                return;
+            }
+            
+            const activeSubtitleIndex = subtitles.findIndex(sub => elapsed < sub.time);
+            let primaryText = '', secondaryText = '', opacity = 0;
+            if (activeSubtitleIndex !== -1) {
+                const activeSub = subtitles[activeSubtitleIndex];
+                const segmentStartTime = (activeSubtitleIndex > 0) ? subtitles[activeSubtitleIndex - 1].time : 0;
+                opacity = window.DisplaySettings.calculateOpacity(elapsed, segmentStartTime, activeSub.time);
+                if (opacity > 0) {
+                    primaryText = activeSub.texts[0] || '';
+                    if (textIndex >= 2) secondaryText = activeSub.texts[textIndex - 1] || '';
                 }
             }
             
             drawText(primaryText, secondaryText, opacity);
-            await videoSource.add(timestamp, 1 / FRAME_RATE);
-
-            if (i % 10 === 0) { // Update progress less frequently
-                onProgress(i / totalFrames);
-            }
-        }
-        
-        onProgress(1); // Final progress update
-        await output.finalize();
-
-        return {
-            name: `${job.name}_${timestampStr}.mp4`,
-            blob: new Blob([output.target.buffer], { type: 'video/mp4' })
+            animationFrameId = requestAnimationFrame(render);
         };
-    };
+        animationFrameId = requestAnimationFrame(render);
+    });
 
+    // --- Main Handler ---
     const handleStartRecording = async () => {
         if (isRecording) return;
-
         const selectedInputs = Array.from(recordVersionsList.querySelectorAll('input:checked'));
-        if (selectedInputs.length === 0) {
-            alert('Пожалуйста, выберите хотя бы одну версию для записи.');
-            return;
-        }
+        if (selectedInputs.length === 0) return alert('Пожалуйста, выберите хотя бы одну версию для записи.');
         
-        const jobs = selectedInputs.map(input => {
-            const canvas = document.createElement('canvas');
-            hiddenCanvasContainer.appendChild(canvas);
-            return {
-                name: input.value,
-                textIndex: parseInt(input.dataset.index, 10),
-                canvas: canvas, // Attach canvas to job
-            };
-        });
-
-        const confirmed = await showConfirmation(`Вы уверены, что хотите записать ${jobs.length} видео?`);
-        if (!confirmed) {
-            // Clean up created canvases if user cancels
-            jobs.forEach(job => hiddenCanvasContainer.removeChild(job.canvas));
-            return;
-        }
+        const useFastMode = !isMobile();
+        const modeMessage = useFastMode 
+            ? "Будет использован быстрый режим записи (для ПК)."
+            : "Будет использован совместимый режим записи (для мобильных). Запись будет идти в реальном времени.";
+        
+        const confirmed = await showConfirmation(`Вы уверены, что хотите записать ${selectedInputs.length} видео? ${modeMessage}`);
+        if (!confirmed) return;
 
         isRecording = true;
         recordStartBtn.disabled = true;
         downloadBtn.disabled = true;
         progressBlock.classList.remove('hidden');
-        statusText.textContent = 'Подготовка к записи...';
 
         window.Subtitles.parseTable();
         const subtitles = window.Subtitles.getSubtitles().filter(sub => sub.time !== null && sub.time >= 0).sort((a, b) => a.time - b.time);
         const duration = subtitles.length > 0 ? subtitles[subtitles.length - 1].time : 0;
-        
+
         if (duration <= 0) {
             statusText.textContent = 'Ошибка: нет тайм-кодов для записи.';
             isRecording = false;
             recordStartBtn.disabled = false;
-            downloadBtn.disabled = false;
-            jobs.forEach(job => hiddenCanvasContainer.removeChild(job.canvas));
             return;
         }
 
         startStopwatch();
         const timestampStr = getTimestamp();
-        
-        const jobProgress = new Array(jobs.length).fill(0);
-        const updateOverallProgress = () => {
-            const totalProgress = jobProgress.reduce((sum, p) => sum + p, 0);
-            const overallPercentage = (totalProgress / jobs.length) * 100;
-            progressBar.style.width = `${overallPercentage}%`;
-            percentageEl.textContent = `${Math.floor(overallPercentage)}%`;
-        };
-        
-        statusText.textContent = `Идет запись ${jobs.length} видео...`;
-
-        const recordingPromises = jobs.map((job, index) => 
-            recordVersion(
-                job, 
-                subtitles, 
-                duration, 
-                timestampStr,
-                (progress) => { // onProgress callback
-                    jobProgress[index] = progress;
-                    updateOverallProgress();
-                }
-            ).catch(error => {
-                console.error(`Failed to record ${job.name}:`, error);
-                // Return an error object to identify failed jobs
-                return { error: true, name: job.name, message: error.message };
-            })
-        );
-
-        const results = await Promise.all(recordingPromises);
-
-        stopStopwatch();
-        
         let successCount = 0;
-        results.forEach(result => {
-            if (result && !result.error) {
-                recordedVideos.push(result);
-                addVideoToDownloadList(result.name);
-                successCount++;
+        const createdCanvases = [];
+
+        if (useFastMode) {
+            // --- FAST MODE LOGIC ---
+            const jobs = selectedInputs.map(input => {
+                const canvas = document.createElement('canvas');
+                hiddenCanvasContainer.appendChild(canvas);
+                createdCanvases.push(canvas);
+                return { name: input.value, textIndex: parseInt(input.dataset.index, 10), canvas };
+            });
+            
+            const jobProgress = new Array(jobs.length).fill(0);
+            const updateOverallProgress = () => {
+                const totalProgress = jobProgress.reduce((sum, p) => sum + p, 0);
+                const overallPercentage = (totalProgress / jobs.length) * 100;
+                progressBar.style.width = `${overallPercentage}%`;
+                percentageEl.textContent = `${Math.floor(overallPercentage)}%`;
+            };
+            
+            statusText.textContent = `Идет быстрая запись ${jobs.length} видео...`;
+            const recordingPromises = jobs.map((job, index) => 
+                recordVersion_Fast(job, subtitles, duration, timestampStr, (p) => { jobProgress[index] = p; updateOverallProgress(); })
+                    .catch(e => ({ error: true, name: job.name, message: e.message }))
+            );
+            const results = await Promise.all(recordingPromises);
+            results.forEach(result => {
+                if (result && !result.error) {
+                    recordedVideos.push(result);
+                    addVideoToDownloadList(result.name);
+                    successCount++;
+                } else console.error(`Failed to record ${result.name}:`, result.message);
+            });
+
+        } else {
+            // --- COMPATIBLE MODE LOGIC ---
+            const canvas = document.createElement('canvas');
+            hiddenCanvasContainer.appendChild(canvas);
+            createdCanvases.push(canvas);
+            const { width, height } = window.DisplaySettings.getResolution();
+            canvas.width = width;
+            canvas.height = height;
+
+            const jobs = selectedInputs.map(input => ({
+                name: input.value, textIndex: parseInt(input.dataset.index, 10), canvas
+            }));
+            
+            for (let i = 0; i < jobs.length; i++) {
+                const job = jobs[i];
+                try {
+                    statusText.textContent = `Запись (${i + 1}/${jobs.length}): ${job.name}`;
+                    const blob = await recordVersion_Compatible(job, subtitles, duration);
+                    const result = { name: `${job.name}_${timestampStr}.mp4`, blob };
+                    recordedVideos.push(result);
+                    addVideoToDownloadList(result.name);
+                    successCount++;
+                } catch (error) {
+                    console.error(`Failed to record ${job.name}:`, error);
+                    alert(`Не удалось записать ${job.name}. Проверьте консоль.`);
+                }
+                const overallPercentage = ((i + 1) / jobs.length) * 100;
+                progressBar.style.width = `${overallPercentage}%`;
+                percentageEl.textContent = `${Math.floor(overallPercentage)}%`;
             }
-        });
+        }
         
-        statusText.textContent = `Запись завершена. Успешно: ${successCount} из ${jobs.length}.`;
-
-        // Clean up all canvases
-        jobs.forEach(job => hiddenCanvasContainer.removeChild(job.canvas));
-
+        // --- Finalization ---
+        stopStopwatch();
+        statusText.textContent = `Запись завершена. Успешно: ${successCount} из ${selectedInputs.length}.`;
+        createdCanvases.forEach(canvas => hiddenCanvasContainer.removeChild(canvas));
         isRecording = false;
         recordStartBtn.disabled = false;
         downloadBtn.disabled = false;
     };
     
     const addVideoToDownloadList = (name) => {
-        if (downloadVideosList.querySelector('p')) {
-            downloadVideosList.innerHTML = ''; // Clear the "no videos" message
-        }
+        if (downloadVideosList.querySelector('p')) downloadVideosList.innerHTML = '';
         const item = document.createElement('div');
         item.classList.add('video-list-item');
         item.innerHTML = `
-            <label>
-                <input type="checkbox" value="${name}" checked />
-                <span>${name}</span>
-            </label>
-            <button class="play-video-btn" data-video-name="${name}">
-                <img src="icons/Play.svg" alt="Play">
-            </button>
-        `;
+            <label><input type="checkbox" value="${name}" checked /><span>${name}</span></label>
+            <button class="play-video-btn" data-video-name="${name}"><img src="icons/Play.svg" alt="Play"></button>`;
         downloadVideosList.appendChild(item);
     };
 
     const handleDownload = async () => {
         const selectedInputs = Array.from(downloadVideosList.querySelectorAll('input:checked'));
         const filesToDownload = selectedInputs.map(input => input.value);
-        if (filesToDownload.length === 0) {
-            alert('Не выбрано ни одного видео для скачивания.');
-            return;
-        }
-        const confirmed = await showConfirmation(`Вы уверены, что хотите скачать ${filesToDownload.length} видео?`);
-        if (!confirmed) return;
+        if (filesToDownload.length === 0) return alert('Не выбрано ни одного видео для скачивания.');
+        if (!await showConfirmation(`Вы уверены, что хотите скачать ${filesToDownload.length} видео?`)) return;
         filesToDownload.forEach(filename => {
             const video = recordedVideos.find(v => v.name === filename);
-            if (video) {
-                downloadBlob(video.blob, video.name);
-            }
+            if (video) downloadBlob(video.blob, video.name);
         });
     };
 
-    // --- Event Listeners ---
     recordStartBtn.addEventListener('click', handleStartRecording);
     downloadBtn.addEventListener('click', handleDownload);
-
     downloadVideosList.addEventListener('click', (e) => {
         const playBtn = e.target.closest('.play-video-btn');
         if (!playBtn) return;
-
         const videoName = playBtn.dataset.videoName;
         const video = recordedVideos.find(v => v.name === videoName);
-
         if (video) {
-            if (currentVideoUrl) {
-                URL.revokeObjectURL(currentVideoUrl);
-            }
+            if (currentVideoUrl) URL.revokeObjectURL(currentVideoUrl);
             currentVideoUrl = URL.createObjectURL(video.blob);
             videoPlayer.src = currentVideoUrl;
             videoPlayerModal.classList.remove('hidden');
-            videoPlayer.play();
+            videoPlayer.play().catch(err => console.error("Error playing video:", err));
         }
     });
 
@@ -366,7 +376,5 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     observer.observe(page, { attributes: true });
 
-    if (page.classList.contains('active')) {
-        setupRecordPage();
-    }
+    if (page.classList.contains('active')) setupRecordPage();
 });
