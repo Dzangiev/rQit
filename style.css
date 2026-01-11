@@ -423,7 +423,9 @@ body {
     border-radius: 6px;
     text-align: center;
     font-size: 16px;
+    -webkit-appearance: textfield; /* Safari and Chrome */
     -moz-appearance: textfield; /* Firefox */
+    appearance: textfield; /* Standard */
 }
 
 .manual-add-inputs input::-webkit-outer-spin-button,

@@ -18,6 +18,25 @@ window.DisplaySettings = {
         easeOutQuad: t => t * (2 - t),
         easeInOutQuad: t => t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t
     },
+    getResolution: function() {
+        const [arWidth, arHeight] = this.settings.aspectRatio.split(':').map(Number);
+        const selectedResolution = this.settings.resolution;
+        let resolutionWidth, resolutionHeight;
+
+        if (arWidth > arHeight) { // Landscape
+            resolutionHeight = selectedResolution;
+            resolutionWidth = Math.round(resolutionHeight * (arWidth / arHeight));
+        } else { // Portrait or Square
+            resolutionWidth = selectedResolution;
+            resolutionHeight = Math.round(resolutionWidth * (arHeight / arWidth));
+        }
+
+        // Ensure width and height are even numbers for 'avc' codec compatibility
+        return {
+            width: Math.floor(resolutionWidth / 2) * 2,
+            height: Math.floor(resolutionHeight / 2) * 2
+        };
+    },
     calculateOpacity: function(currentTime, segmentStartTime, segmentEndTime) {
         const s = this.settings;
         if (s.animationType === 'none' || s.animationDuration <= 0) {
@@ -57,21 +76,8 @@ window.DisplaySettings = {
 
         const applyCanvasSize = () => {
             const dpr = window.devicePixelRatio || 1;
+            const { width: resolutionWidth, height: resolutionHeight } = this.getResolution();
             const [arWidth, arHeight] = localSettings.aspectRatio.split(':').map(Number);
-            const selectedResolution = localSettings.resolution;
-            let resolutionWidth, resolutionHeight;
-
-            if (arWidth > arHeight) { // Landscape
-                resolutionHeight = selectedResolution;
-                resolutionWidth = Math.round(resolutionHeight * (arWidth / arHeight));
-            } else { // Portrait or Square
-                resolutionWidth = selectedResolution;
-                resolutionHeight = Math.round(resolutionWidth * (arHeight / arWidth));
-            }
-
-            // Ensure width and height are even numbers for 'avc' codec compatibility
-            resolutionWidth = Math.floor(resolutionWidth / 2) * 2;
-            resolutionHeight = Math.floor(resolutionHeight / 2) * 2;
 
             // For hidden canvases, we just set the resolution directly
             if (canvas.parentElement.id === 'hidden-canvas-container') {
