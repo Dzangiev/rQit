@@ -28,6 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const confirmationMessage = document.getElementById('confirmation-message');
     const confirmBtn = document.getElementById('confirm-btn');
     const cancelBtn = document.getElementById('cancel-btn');
+    const openRecordModeBtn = document.getElementById('open-record-mode-btn');
+    const recordModeModal = document.getElementById('record-mode-modal');
+    const recordModeSelect = document.getElementById('record-mode-select');
+    const recordModeSaveBtn = document.getElementById('record-mode-save-btn');
 
     // --- State ---
     let isRecording = false;
@@ -38,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let mediaRecorder;
     let recordedChunks = [];
     let animationFrameId;
+    let currentRecordMode = 'fast';
 
     // --- Config ---
     const FRAME_RATE = 30;
@@ -48,6 +53,12 @@ document.addEventListener('DOMContentLoaded', () => {
     recordVersionsCloseBtn.addEventListener('click', () => recordVersionsModal.classList.add('hidden'));
     openDownloadModalBtn.addEventListener('click', () => downloadModal.classList.remove('hidden'));
     downloadModalCloseBtn.addEventListener('click', () => downloadModal.classList.add('hidden'));
+    openRecordModeBtn.addEventListener('click', () => recordModeModal.classList.remove('hidden'));
+    recordModeSaveBtn.addEventListener('click', () => {
+        currentRecordMode = recordModeSelect.value;
+        recordModeModal.classList.add('hidden');
+    });
+
     videoPlayerCloseBtn.addEventListener('click', () => {
         videoPlayerModal.classList.add('hidden');
         videoPlayer.pause();
@@ -93,6 +104,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const getTimestamp = () => new Date().toISOString().replace(/[:.]/g, '-');
     
     const setupRecordPage = () => {
+        if (isMobile()) {
+            currentRecordMode = 'compatible';
+        } else {
+            currentRecordMode = 'fast';
+        }
+        recordModeSelect.value = currentRecordMode;
+
         if (!window.Subtitles) return;
         window.Subtitles.parseTable();
         const headers = window.Subtitles.getHeaders();
@@ -257,14 +275,11 @@ document.addEventListener('DOMContentLoaded', () => {
         const selectedInputs = Array.from(recordVersionsList.querySelectorAll('input:checked'));
         if (selectedInputs.length === 0) return alert('Пожалуйста, выберите хотя бы одну версию для записи.');
         
-        const useFastMode = !isMobile();
-        const modeMessage = useFastMode 
-            ? "Будет использован быстрый режим записи (для ПК)."
-            : "Будет использован совместимый режим записи (для мобильных). Запись будет идти в реальном времени.";
-        
-        const confirmed = await showConfirmation(`Вы уверены, что хотите записать ${selectedInputs.length} видео? ${modeMessage}`);
+        const confirmed = await showConfirmation(`Вы уверены, что хотите записать ${selectedInputs.length} видео?`);
         if (!confirmed) return;
 
+        const useFastMode = currentRecordMode === 'fast';
+        
         isRecording = true;
         recordStartBtn.disabled = true;
         downloadBtn.disabled = true;
@@ -288,6 +303,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (useFastMode) {
             // --- FAST MODE LOGIC ---
+            statusText.textContent = `Идет быстрая запись ${selectedInputs.length} видео...`;
             const jobs = selectedInputs.map(input => {
                 const canvas = document.createElement('canvas');
                 hiddenCanvasContainer.appendChild(canvas);
@@ -303,7 +319,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 percentageEl.textContent = `${Math.floor(overallPercentage)}%`;
             };
             
-            statusText.textContent = `Идет быстрая запись ${jobs.length} видео...`;
             const recordingPromises = jobs.map((job, index) => 
                 recordVersion_Fast(job, subtitles, duration, timestampStr, (p) => { jobProgress[index] = p; updateOverallProgress(); })
                     .catch(e => ({ error: true, name: job.name, message: e.message }))
@@ -319,6 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         } else {
             // --- COMPATIBLE MODE LOGIC ---
+            statusText.textContent = `Идет запись в реальном времени...`;
             const canvas = document.createElement('canvas');
             hiddenCanvasContainer.appendChild(canvas);
             createdCanvases.push(canvas);

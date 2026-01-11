@@ -177,6 +177,9 @@
                         <h2>Запись</h2>
                         <div class="record-block-controls">
                             <button id="open-versions-modal-btn" class="btn btn--full-width">Выбрать версии</button>
+                             <button id="open-record-mode-btn" class="btn btn--square">
+                                <span class="icon icon-gear"></span>
+                            </button>
                             <button id="record-start-btn" class="btn btn--primary-action btn--square">
                                 <span class="icon icon-film"></span>
                             </button>
@@ -246,6 +249,22 @@
             <div class="modal-buttons">
                 <button id="confirm-btn" class="btn">Подтвердить</button>
                 <button id="cancel-btn" class="btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="record-mode-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Метод записи</h2>
+            <div class="settings-item" style="padding: 10px 0;">
+                <label for="record-mode-select">Метод записи</label>
+                <select id="record-mode-select" class="btn">
+                    <option value="fast">Быстрый (ПК)</option>
+                    <option value="compatible">Совместимый (мобильные)</option>
+                </select>
+            </div>
+            <div class="modal-buttons">
+                <button id="record-mode-save-btn" class="btn">Сохранить</button>
             </div>
         </div>
     </div>

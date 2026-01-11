@@ -339,6 +339,7 @@ body {
 .icon-film { -webkit-mask-image: url('icons/FilmStrip.svg'); mask-image: url('icons/FilmStrip.svg'); }
 .icon-plus { -webkit-mask-image: url('icons/Plus.svg'); mask-image: url('icons/Plus.svg'); }
 .icon-x { -webkit-mask-image: url('icons/X.svg'); mask-image: url('icons/X.svg'); }
+.icon-gear { -webkit-mask-image: url('icons/GearSix.svg'); mask-image: url('icons/GearSix.svg'); }
 
 /* --- Confirmation Modal --- */
 .modal-overlay {
@@ -1097,4 +1098,7 @@ body {
 
 .progress-bar-container {
     height: 10px;
+}
+.record-block .settings-item {
+    justify-content: space-between;
 }
