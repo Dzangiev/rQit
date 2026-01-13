@@ -1116,7 +1116,7 @@ body {
 
 @media (max-width: 768px) {
     body {
-        transform: scale(0.6);
+        transform: scale(0.8);
         transform-origin: top left;
         width: 166.67vw;
         height: 166.67vh;
