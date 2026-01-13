@@ -1118,8 +1118,8 @@ body {
     body {
         transform: scale(0.8);
         transform-origin: top left;
-        width: 166.67vw;
-        height: 166.67vh;
+        width: 125vw;
+        height: 125vh;
         overflow: hidden;
     }
 }
