@@ -149,7 +149,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Add new language columns
             languages.forEach(lang => {
                 const newHeaderCell = document.createElement('th');
-                newHeaderCell.innerHTML = `<div class="header-content" contenteditable="true">${lang.name}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button>`;
+                newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${lang.name}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
                 header.appendChild(newHeaderCell);
             });
 
@@ -203,7 +203,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const addColumn = () => {
         const header = mainTable.querySelector('thead tr');
         const newHeaderCell = document.createElement('th');
-        newHeaderCell.innerHTML = `<div class="header-content" contenteditable="true">New Language</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button>`;
+        newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">New Language</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
         header.appendChild(newHeaderCell);
 
         const rows = mainTable.querySelectorAll('tbody tr');
@@ -247,6 +247,11 @@ document.addEventListener('DOMContentLoaded', () => {
         header.removeChild(header.children[index]);
 
         const rows = mainTable.querySelectorAll('tbody tr');
+        rows.forEach(row => {
+            if (row.children[index]) {
+                row.removeChild(row.children[index]);
+            }
+        });
         updateDeleteColumnButtons();
         window.Subtitles.parseTable();
         saveTable();
@@ -324,11 +329,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const updateDeleteColumnButtons = () => {
-        const deleteButtons = mainTable.querySelectorAll('.btn-delete-col');
-        deleteButtons.forEach((btn, index) => {
-            btn.style.visibility = index < 2 ? 'hidden' : 'visible';
-            btn.removeEventListener('click', deleteColumn);
-            if (index >= 2) {
+        const headers = mainTable.querySelectorAll('thead th');
+        headers.forEach((th, index) => {
+            const btn = th.querySelector('.btn-delete-col');
+            if(btn) {
+                btn.style.visibility = index < 2 ? 'hidden' : 'visible';
+                btn.removeEventListener('click', deleteColumn);
                 btn.addEventListener('click', deleteColumn);
             }
         });

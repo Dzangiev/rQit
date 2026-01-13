@@ -27,7 +27,12 @@ window.Subtitles = (() => {
         const headerCells = table.querySelectorAll('thead th');
         const newHeaders = [];
         headerCells.forEach(th => {
-            newHeaders.push(th.querySelector('.header-content').innerText.trim());
+            const headerText = th.querySelector('.header-text');
+            if (headerText) {
+                newHeaders.push(headerText.innerText.trim());
+            } else {
+                 newHeaders.push(th.querySelector('.header-content').innerText.trim());
+            }
         });
         headers = newHeaders;
 

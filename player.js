@@ -27,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- State ---
     let animationFrameId;
-    let currentSubtitleIndex = -1;
     let currentFile = null;
 
     // --- Debounce Utility for Resize ---
@@ -63,16 +62,26 @@ document.addEventListener('DOMContentLoaded', () => {
                 lastPassedIndex = i;
             }
         }
-
-        const newSubtitleIndex = lastPassedIndex + 1;
-
-        if (newSubtitleIndex !== currentSubtitleIndex) {
-            currentSubtitleIndex = newSubtitleIndex;
-            if (currentSubtitleIndex < subtitles.length) {
-                textDisplay.textContent = subtitles[currentSubtitleIndex].text;
-            } else {
-                textDisplay.textContent = '';
+        
+        let displayIndex = -1;
+        if (lastPassedIndex === -1) {
+            // Before the first timestamp. Display text from row 0.
+            displayIndex = 0;
+        } else {
+            // We have passed the subtitle at `lastPassedIndex`.
+            // We should display the text of the *next* row.
+            displayIndex = lastPassedIndex + 1;
+        }
+        
+        let textToShow = '';
+        if (displayIndex < subtitles.length) {
+            if (subtitles[displayIndex] && subtitles[displayIndex].texts) {
+                textToShow = subtitles[displayIndex].texts[0] || '';
             }
+        }
+
+        if (textDisplay.textContent !== textToShow) {
+            textDisplay.textContent = textToShow;
         }
     };
     
