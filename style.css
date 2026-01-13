@@ -1125,3 +1125,13 @@ body.is-mobile {
     height: calc(var(--vh, 1vh) * 125);
     overflow: hidden;
 }
+
+.collapsible-content {
+    background-color: #1c1c1e;
+    padding: 10px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-align: left;
+    max-height: 150px;
+    overflow-y: auto;
+}

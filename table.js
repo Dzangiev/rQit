@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClearTable = document.getElementById('btn-clear-table');
     const btnAddManual = document.getElementById('btn-add-manual');
     const btnAddFromQuran = document.getElementById('btn-add-from-quran');
+    const btnExportTable = document.getElementById('btn-export-table');
+    const importTableInput = document.getElementById('import-table-input');
 
     // --- Confirmation Modal DOM Elements ---
     const confirmationModal = document.getElementById('confirmation-modal');
@@ -29,8 +31,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const quranAyahEndInput = document.getElementById('quran-ayah-end');
     const quranImportConfirmBtn = document.getElementById('quran-import-confirm-btn');
     const quranImportCancelBtn = document.getElementById('quran-import-cancel-btn');
+    const quranLangCollapsibleTrigger = document.getElementById('quran-lang-collapsible-trigger');
+    const quranLangListContainer = document.getElementById('quran-lang-list-container');
 
     let onConfirmCallback = null;
+
+    const ALL_QURAN_LANGUAGES = [
+        { name: 'quran', file: 'quran.json' },
+        { name: 'en', file: 'en.json' },
+        { name: 'ru', file: 'ru.json' },
+        { name: 'bn', file: 'bn.json' },
+        { name: 'es', file: 'es.json' },
+        { name: 'id', file: 'id.json' }
+    ];
+    const QURAN_LANG_STORAGE_KEY = 'quranImportLanguages';
 
     // --- Modal Logic ---
     const showConfirmationModal = (message, callback) => {
@@ -57,15 +71,54 @@ document.addEventListener('DOMContentLoaded', () => {
         manualAddModal.classList.add('hidden');
     };
 
+    const populateLanguageList = () => {
+        quranLangListContainer.innerHTML = ''; // Clear previous
+        const savedLangs = JSON.parse(localStorage.getItem(QURAN_LANG_STORAGE_KEY)) || ALL_QURAN_LANGUAGES.map(l => l.name);
+
+        const allLabel = document.createElement('label');
+        allLabel.innerHTML = `<strong><input type="checkbox" id="quran-lang-select-all"> Выбрать все</strong>`;
+        quranLangListContainer.appendChild(allLabel);
+
+        ALL_QURAN_LANGUAGES.forEach(lang => {
+            const label = document.createElement('label');
+            const isChecked = savedLangs.includes(lang.name);
+            label.innerHTML = `<input type="checkbox" class="quran-lang-checkbox" value="${lang.name}" ${isChecked ? 'checked' : ''}> ${lang.name}`;
+            quranLangListContainer.appendChild(label);
+        });
+
+        const selectAllCheckbox = document.getElementById('quran-lang-select-all');
+        const langCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox');
+
+        const updateSelectAllState = () => {
+            const allChecked = Array.from(langCheckboxes).every(cb => cb.checked);
+            selectAllCheckbox.checked = allChecked;
+        };
+
+        updateSelectAllState();
+
+        selectAllCheckbox.addEventListener('change', () => {
+            langCheckboxes.forEach(cb => {
+                cb.checked = selectAllCheckbox.checked;
+            });
+        });
+
+        langCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateSelectAllState);
+        });
+    };
+
+
     const showQuranImportModal = () => {
         quranSurahInput.value = '';
         quranAyahStartInput.value = '';
         quranAyahEndInput.value = '';
+        populateLanguageList();
         quranImportModal.classList.remove('hidden');
     };
 
     const hideQuranImportModal = () => {
         quranImportModal.classList.add('hidden');
+        quranLangListContainer.classList.add('hidden');
     };
 
     confirmBtn.addEventListener('click', () => {
@@ -78,6 +131,9 @@ document.addEventListener('DOMContentLoaded', () => {
     cancelBtn.addEventListener('click', hideConfirmationModal);
     manualAddCancelBtn.addEventListener('click', hideManualAddModal);
     quranImportCancelBtn.addEventListener('click', hideQuranImportModal);
+    quranLangCollapsibleTrigger.addEventListener('click', () => {
+        quranLangListContainer.classList.toggle('hidden');
+    });
 
     manualAddSaveBtn.addEventListener('click', () => {
         const h = parseInt(manualInputH.value || 0, 10);
@@ -111,14 +167,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Table Manipulation Logic ---
     const importFromQuran = async (surah, ayahStart, ayahEnd) => {
-        const languages = [
-            { name: 'quran', file: 'quran.json' },
-            { name: 'en', file: 'en.json' },
-            { name: 'ru', file: 'ru.json' },
-            { name: 'bn', file: 'bn.json' },
-            { name: 'es', file: 'es.json' },
-            { name: 'id', file: 'id.json' }
-        ];
+        const selectedLangCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox:checked');
+        const selectedLangNames = Array.from(selectedLangCheckboxes).map(cb => cb.value);
+
+        localStorage.setItem(QURAN_LANG_STORAGE_KEY, JSON.stringify(selectedLangNames));
+
+        const languages = ALL_QURAN_LANGUAGES.filter(lang => selectedLangNames.includes(lang.name));
+
+        if (languages.length === 0) {
+            alert('Пожалуйста, выберите хотя бы один язык для импорта.');
+            return;
+        }
 
         try {
             const responses = await Promise.all(
@@ -187,9 +246,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
 
-            updateDeleteColumnButtons();
-            updateDeleteRowButtons();
-            addCellInputListeners();
+            updateAllEventListeners();
             window.Subtitles.parseTable();
             saveTable();
             hideQuranImportModal();
@@ -212,9 +269,8 @@ document.addEventListener('DOMContentLoaded', () => {
             newCell.innerHTML = '<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div>';
             row.appendChild(newCell);
         });
-        updateDeleteColumnButtons();
+        updateAllEventListeners();
         window.Subtitles.parseTable();
-        addCellInputListeners();
         saveTable();
     };
 
@@ -228,9 +284,8 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         newRow.innerHTML = cells;
         tBody.appendChild(newRow);
-        updateDeleteRowButtons();
+        updateAllEventListeners();
         window.Subtitles.parseTable();
-        addCellInputListeners();
         saveTable();
     };
     
@@ -252,7 +307,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.removeChild(row.children[index]);
             }
         });
-        updateDeleteColumnButtons();
+        updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
     };
@@ -265,7 +320,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const row = btn.closest('tr');
         row.parentNode.removeChild(row);
-        updateDeleteRowButtons();
+        updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
     };
@@ -346,18 +401,23 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', deleteRow);
         });
     };
+    const onCellInput = () => {
+        window.Subtitles.parseTable();
+        saveTable();
+    };
+
     const addCellInputListeners = () => {
-        const cells = mainTable.querySelectorAll('.cell-content');
+        const cells = mainTable.querySelectorAll('.cell-content[contenteditable="true"]');
         cells.forEach(cell => {
-            cell.removeEventListener('input', () => {
-                window.Subtitles.parseTable();
-                saveTable();
-            });
-            cell.addEventListener('input', () => {
-                window.Subtitles.parseTable();
-                saveTable();
-            });
+            cell.removeEventListener('input', onCellInput);
+            cell.addEventListener('input', onCellInput);
         });
+    };
+    
+    const updateAllEventListeners = () => {
+        updateDeleteColumnButtons();
+        updateDeleteRowButtons();
+        addCellInputListeners();
     };
 
     const formatTime = (seconds) => {
@@ -410,6 +470,138 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const exportTable = () => {
+        const table = mainTable;
+        let csv = [];
+        
+        // Head
+        const headers = [];
+        table.querySelectorAll('thead th').forEach(th => {
+            const text = th.querySelector('.header-text')?.innerText || th.innerText;
+            headers.push(`"${(text || '').replace(/"/g, '""').trim()}"`);
+        });
+        csv.push(headers.join(','));
+
+        // Body
+        table.querySelectorAll('tbody tr').forEach(row => {
+            const rowData = [];
+            row.querySelectorAll('td').forEach(td => {
+                const text = td.querySelector('.cell-content')?.innerText || '';
+                rowData.push(`"${text.replace(/"/g, '""')}"`);
+            });
+            csv.push(rowData.join(','));
+        });
+
+        const csvString = '\uFEFF' + csv.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rqit-table-export-${new Date().toISOString()}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    const parseCSV = (str) => {
+        const arr = [];
+        let quote = false;
+        let row = 0;
+        let col = 0;
+        let c = '';
+        for (let i = 0; i < str.length; i++) {
+            let cc = str[i];
+            let nc = str[i + 1];
+            arr[row] = arr[row] || [];
+            arr[row][col] = arr[row][col] || '';
+
+            if (cc == '"' && quote && nc == '"') {
+                arr[row][col] += cc;
+                ++i;
+                continue;
+            }
+            if (cc == '"') {
+                quote = !quote;
+                continue;
+            }
+            if (cc == ',' && !quote) {
+                ++col;
+                continue;
+            }
+            if (cc == '\n' && !quote) {
+                ++row;
+                col = 0;
+                continue;
+            }
+
+            arr[row][col] += cc;
+        }
+        return arr;
+    };
+
+    const importTable = (event) => {
+        const file = event.target.files[0];
+        if (!file) {
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const csvData = e.target.result;
+                const parsedData = parseCSV(csvData);
+
+                if (!parsedData || parsedData.length < 1) {
+                    throw new Error("CSV data is empty or invalid.");
+                }
+                
+                const newHead = mainTable.querySelector('thead');
+                const newBody = mainTable.querySelector('tbody');
+                
+                newHead.innerHTML = '';
+                newBody.innerHTML = '';
+
+                const headerRow = document.createElement('tr');
+                const headers = parsedData.shift(); 
+                headers.forEach((headerText, index) => {
+                    const th = document.createElement('th');
+                    if (index === 0) { // First header is special
+                         th.innerHTML = `<div class="header-content">${headerText}<button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button></div>`;
+                    } else {
+                        th.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${headerText}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
+                    }
+                    headerRow.appendChild(th);
+                });
+                newHead.appendChild(headerRow);
+
+                parsedData.forEach(rowData => {
+                    if (rowData.length === 0 || (rowData.length === 1 && rowData[0] === '')) return; // Skip empty rows
+                    const tr = document.createElement('tr');
+                    const firstCellText = rowData.shift() || '';
+                    const tdFirst = document.createElement('td');
+                    tdFirst.innerHTML = `<div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">${firstCellText}</div></div>`;
+                    tr.appendChild(tdFirst);
+
+                    rowData.forEach(cellText => {
+                        const td = document.createElement('td');
+                        td.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${cellText}</div></div>`;
+                        tr.appendChild(td);
+                    });
+                    newBody.appendChild(tr);
+                });
+
+                saveTable();
+                loadTable();
+                
+            } catch (error) {
+                console.error('Error parsing or building from CSV:', error);
+                alert('Ошибка: Не удалось импортировать таблицу из CSV файла.');
+            }
+        };
+        reader.readAsText(file);
+        event.target.value = '';
+    };
+
     const saveTable = () => {
         const tableHead = mainTable.querySelector('thead').innerHTML;
         const tableBody = mainTable.querySelector('tbody').innerHTML;
@@ -445,6 +637,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnClearTable.addEventListener('click', () => showConfirmationModal('Вы уверены, что хотите очистить всю таблицу?', clearTable));
     btnAddManual.addEventListener('click', showManualAddModal);
     btnAddFromQuran.addEventListener('click', showQuranImportModal);
+    btnExportTable.addEventListener('click', exportTable);
+    importTableInput.addEventListener('change', importTable);
 
     loadTable();
 

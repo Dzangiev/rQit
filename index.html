@@ -131,12 +131,15 @@
 
                     </div>
 
-                    <div class="table-bottom-bar">
+                    <div class="table-bottom-bar" style="grid-template-columns: 1fr 1fr 1fr;">
                         <button class="btn btn--full-width" id="btn-add-manual">Добавить тайм-код</button>
                         <button class="btn btn--full-width" id="btn-add-language">Добавить язык</button>
                         <button class="btn btn--full-width" id="btn-clear-table">Очистить всю таблицу</button>
                         <button class="btn btn--full-width" id="btn-add-row-bottom">Добавить строку</button>
                         <button class="btn btn--full-width" id="btn-add-from-quran">Добавить из Корана</button>
+                        <button class="btn btn--full-width" id="btn-export-table">Экспорт таблицы</button>
+                        <label for="import-table-input" class="btn btn--full-width">Импорт таблицы</label>
+                        <input type="file" id="import-table-input" accept=".csv" hidden>
                     </div>
                 </div>
             </div>
@@ -296,6 +299,14 @@
                 <input type="number" id="quran-ayah-start" placeholder="Аят (начало)">
                 <input type="number" id="quran-ayah-end" placeholder="Аят (конец)">
             </div>
+            
+            <div class="collapsible-container" style="margin-top: 15px;">
+                <button type="button" id="quran-lang-collapsible-trigger" class="btn btn--full-width">Выбрать языки</button>
+                <div class="collapsible-content hidden" id="quran-lang-list-container">
+                    <!-- Checkboxes will be populated by JS -->
+                </div>
+            </div>
+
             <div class="modal-buttons">
                 <button id="quran-import-confirm-btn" class="btn">Подтвердить</button>
                 <button id="quran-import-cancel-btn" class="btn">Отмена</button>
