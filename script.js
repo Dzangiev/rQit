@@ -1,4 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // --- Mobile Detection ---
+    function detectMobile() {
+        const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
+        if (mobileRegex.test(navigator.userAgent)) {
+            document.documentElement.classList.add('is-mobile');
+        }
+    }
+    detectMobile();
+
     // Set viewport height unit
     function setVhVariable() {
         let vh = window.innerHeight * 0.01;
