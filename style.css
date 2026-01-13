@@ -1115,11 +1115,14 @@ body {
 }
 
 @media (max-width: 768px) {
+    html {
+        overflow: hidden;
+    }
     body {
         transform: scale(0.8);
         transform-origin: top left;
         width: 125vw;
-        height: 125vh;
+        height: calc(var(--vh, 1vh) * 125);
         overflow: hidden;
     }
 }
