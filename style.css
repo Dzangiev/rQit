@@ -58,6 +58,14 @@ body {
 .align-center {
     align-items: center;
 }
+
+/* --- Typography --- */
+.page-title {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0;
+    text-align: center;
+}
 /* --- Button --- */
 .btn {
     display: flex;
@@ -574,9 +582,6 @@ body {
 }
 
 .table-title {
-    font-size: 32px;
-    font-weight: 500;
-    margin: 0;
     padding-top: 20px;
     flex-shrink: 0;
 }
@@ -710,10 +715,6 @@ body {
 }
 
 .display-settings-title {
-    font-size: 32px;
-    font-weight: 500;
-    margin: 0;
-    text-align: center;
     flex-shrink: 0;
 }
 
@@ -828,12 +829,7 @@ body {
     gap: 25px;
 }
 
-.record-title {
-    font-size: 32px;
-    font-weight: 500;
-    margin: 0;
-    text-align: center;
-}
+
 
 .record-block {
     display: flex;
@@ -1152,7 +1148,7 @@ html.is-mobile {
     overflow: hidden;
 }
 
-body.is-mobile {
+html.is-mobile body {
     transform: scale(0.8);
     transform-origin: top left;
     width: 125vw;
