@@ -1166,3 +1166,35 @@ body.is-mobile {
     max-height: 150px;
     overflow-y: auto;
 }
+
+/* --- Table Undo/Redo --- */
+.table-undo-redo-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.btn--table-icon-only {
+    width: 70px;
+    height: calc(35px - 5px); /* Half height of a normal button, minus gap */
+    padding: 0;
+}
+
+.btn--table-icon-only .icon {
+    width: 30px;
+    height: 30px;
+    background-color: #fff;
+}
+
+.btn--table-icon-only:disabled {
+    background-color: #1c1c1e;
+    border-color: #333;
+    cursor: not-allowed;
+}
+
+.btn--table-icon-only:disabled .icon {
+    background-color: #555;
+}
+
+.icon-undo { -webkit-mask-image: url('icons/Undo.svg'); mask-image: url('icons/Undo.svg'); }
+.icon-redo { -webkit-mask-image: url('icons/Redo.svg'); mask-image: url('icons/Redo.svg'); }

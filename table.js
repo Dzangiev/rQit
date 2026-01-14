@@ -8,6 +8,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAddFromQuran = document.getElementById('btn-add-from-quran');
     const btnExportTable = document.getElementById('btn-export-table');
     const importTableInput = document.getElementById('import-table-input');
+    const btnUndo = document.getElementById('btn-undo');
+    const btnRedo = document.getElementById('btn-redo');
 
     // --- Confirmation Modal DOM Elements ---
     const confirmationModal = document.getElementById('confirmation-modal');
@@ -35,6 +37,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const quranLangListContainer = document.getElementById('quran-lang-list-container');
 
     let onConfirmCallback = null;
+
+    // --- Undo/Redo State ---
+    let history = [];
+    let historyIndex = -1;
 
     const ALL_QURAN_LANGUAGES = [
         { name: 'quran', file: 'quran.json' },
@@ -136,6 +142,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     manualAddSaveBtn.addEventListener('click', () => {
+        saveState();
         const h = parseInt(manualInputH.value || 0, 10);
         const m = parseInt(manualInputM.value || 0, 10);
         const s = parseInt(manualInputS.value || 0, 10);
@@ -162,8 +169,93 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        saveState();
         importFromQuran(surah, ayahStart, ayahEnd);
     });
+
+    // --- Table State & History ---
+    const getTableData = () => {
+        const headers = Array.from(mainTable.querySelectorAll('thead th')).map(th => {
+            return th.querySelector('.header-text')?.innerText || th.innerText;
+        });
+        const body = Array.from(mainTable.querySelectorAll('tbody tr')).map(row => {
+            return Array.from(row.querySelectorAll('td')).map(td => {
+                return td.querySelector('.cell-content')?.innerText || '';
+            });
+        });
+        return { headers, body };
+    };
+
+    const restoreTableFromData = (data) => {
+        if (!data) return;
+
+        const newHead = mainTable.querySelector('thead');
+        const newBody = mainTable.querySelector('tbody');
+        
+        newHead.innerHTML = '';
+        newBody.innerHTML = '';
+
+        const headerRow = document.createElement('tr');
+        data.headers.forEach((headerText, index) => {
+            const th = document.createElement('th');
+            if (index === 0) {
+                th.innerHTML = `<div class="header-content">${headerText}<button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button></div>`;
+            } else {
+                th.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${headerText}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
+            }
+            headerRow.appendChild(th);
+        });
+        newHead.appendChild(headerRow);
+
+        data.body.forEach(rowData => {
+            const tr = document.createElement('tr');
+            rowData.forEach((cellText, index) => {
+                const td = document.createElement('td');
+                if (index === 0) {
+                    td.innerHTML = `<div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">${cellText}</div></div>`;
+                } else {
+                    td.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${cellText}</div></div>`;
+                }
+                tr.appendChild(td);
+            });
+            newBody.appendChild(tr);
+        });
+
+        updateAllEventListeners();
+        window.Subtitles.parseTable();
+        saveTable(); // Still save to localStorage for persistence
+    };
+
+    const saveState = () => {
+        // Clear redo stack
+        history = history.slice(0, historyIndex + 1);
+        // Push new state
+        history.push(getTableData());
+        historyIndex++;
+        updateUndoRedoButtons();
+    };
+
+    const undo = () => {
+        if (historyIndex > 0) {
+            historyIndex--;
+            restoreTableFromData(history[historyIndex]);
+            updateUndoRedoButtons();
+        }
+    };
+
+    const redo = () => {
+        if (historyIndex < history.length - 1) {
+            historyIndex++;
+            restoreTableFromData(history[historyIndex]);
+            updateUndoRedoButtons();
+        }
+    };
+
+    const updateUndoRedoButtons = () => {
+        btnUndo.disabled = historyIndex <= 0;
+        btnRedo.disabled = historyIndex >= history.length - 1;
+    };
+
 
     // --- Table Manipulation Logic ---
     const importFromQuran = async (surah, ayahStart, ayahEnd) => {
@@ -258,6 +350,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const addColumn = () => {
+        saveState();
         const header = mainTable.querySelector('thead tr');
         const newHeaderCell = document.createElement('th');
         newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">New Language</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
@@ -275,6 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const addRow = () => {
+        saveState();
         const tBody = mainTable.querySelector('tbody');
         const newRow = document.createElement('tr');
         const colCount = mainTable.querySelector('thead tr').children.length;
@@ -293,6 +387,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const btn = e.target.closest('.btn-delete-col');
         if (!btn) return;
 
+        saveState();
         const th = btn.closest('th');
         const index = Array.from(th.parentNode.children).indexOf(th);
 
@@ -317,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!btn) return;
 
         if (mainTable.querySelector('tbody').rows.length <= 1) return;
-
+        saveState();
         const row = btn.closest('tr');
         row.parentNode.removeChild(row);
         updateAllEventListeners();
@@ -326,26 +421,30 @@ document.addEventListener('DOMContentLoaded', () => {
     };
     
     const clearTable = () => {
+        saveState();
         const tBody = mainTable.querySelector('tbody');
-        while (tBody.firstChild) {
-            tBody.removeChild(tBody.firstChild);
-        }
+        tBody.innerHTML = '';
         const header = mainTable.querySelector('thead tr');
         while (header.children.length > 2) {
             header.removeChild(header.lastChild);
         }
-        const rows = mainTable.querySelectorAll('tbody tr');
-        rows.forEach(row => {
-             while (row.children.length > 2) {
-                row.removeChild(row.lastChild);
-            }
-        });
-        addRow();
+
+        const newRow = document.createElement('tr');
+        const colCount = mainTable.querySelector('thead tr').children.length;
+        let cells = `<td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content"></div></div></td>`;
+        for (let i = 1; i < colCount; i++) {
+            cells += '<td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div></td>';
+        }
+        newRow.innerHTML = cells;
+        tBody.appendChild(newRow);
+
+        updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
     };
 
     const clearAllTimestamps = () => {
+        saveState();
         const timeCells = mainTable.querySelectorAll('tbody tr td:first-child .cell-content');
         timeCells.forEach(cell => {
             cell.innerText = '';
@@ -401,16 +500,34 @@ document.addEventListener('DOMContentLoaded', () => {
             btn.addEventListener('click', deleteRow);
         });
     };
-    const onCellInput = () => {
-        window.Subtitles.parseTable();
-        saveTable();
-    };
 
     const addCellInputListeners = () => {
-        const cells = mainTable.querySelectorAll('.cell-content[contenteditable="true"]');
+        const cells = mainTable.querySelectorAll('td .cell-content[contenteditable="true"], th .header-text[contenteditable="true"]');
         cells.forEach(cell => {
-            cell.removeEventListener('input', onCellInput);
-            cell.addEventListener('input', onCellInput);
+            let initialValue = '';
+
+            const onFocus = (event) => {
+                initialValue = event.target.innerText;
+            };
+
+            const onBlur = (event) => {
+                if (event.target.innerText !== initialValue) {
+                    saveState();
+                }
+            };
+            
+            cell.removeEventListener('focus', onFocus);
+            cell.addEventListener('focus', onFocus);
+            cell.removeEventListener('blur', onBlur);
+            cell.addEventListener('blur', onBlur);
+
+            // This is for live subtitle preview and persistence, not for undo/redo
+            const onInput = () => {
+                window.Subtitles.parseTable();
+                saveTable();
+            };
+            cell.removeEventListener('input', onInput);
+            cell.addEventListener('input', onInput);
         });
     };
     
@@ -438,6 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
+        saveState();
         const formattedTime = formatTime(time);
         const tBody = mainTable.querySelector('tbody');
         
@@ -461,6 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const clearTimestampByIndex = (index) => {
+        saveState();
         const tBody = mainTable.querySelector('tbody');
         if (tBody && tBody.rows.length > index) {
             const cell = tBody.rows[index].cells[0]?.querySelector('.cell-content');
@@ -541,6 +660,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const importTable = (event) => {
+        saveState();
         const file = event.target.files[0];
         if (!file) {
             return;
@@ -555,43 +675,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     throw new Error("CSV data is empty or invalid.");
                 }
                 
-                const newHead = mainTable.querySelector('thead');
-                const newBody = mainTable.querySelector('tbody');
-                
-                newHead.innerHTML = '';
-                newBody.innerHTML = '';
+                const tableData = {
+                    headers: parsedData.shift() || [],
+                    body: parsedData.filter(row => row.length > 0 && (row.length > 1 || row[0] !== ''))
+                };
 
-                const headerRow = document.createElement('tr');
-                const headers = parsedData.shift(); 
-                headers.forEach((headerText, index) => {
-                    const th = document.createElement('th');
-                    if (index === 0) { // First header is special
-                         th.innerHTML = `<div class="header-content">${headerText}<button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button></div>`;
-                    } else {
-                        th.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${headerText}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
-                    }
-                    headerRow.appendChild(th);
-                });
-                newHead.appendChild(headerRow);
-
-                parsedData.forEach(rowData => {
-                    if (rowData.length === 0 || (rowData.length === 1 && rowData[0] === '')) return; // Skip empty rows
-                    const tr = document.createElement('tr');
-                    const firstCellText = rowData.shift() || '';
-                    const tdFirst = document.createElement('td');
-                    tdFirst.innerHTML = `<div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">${firstCellText}</div></div>`;
-                    tr.appendChild(tdFirst);
-
-                    rowData.forEach(cellText => {
-                        const td = document.createElement('td');
-                        td.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${cellText}</div></div>`;
-                        tr.appendChild(td);
-                    });
-                    newBody.appendChild(tr);
-                });
-
-                saveTable();
-                loadTable();
+                restoreTableFromData(tableData);
+                saveTable(); // Persist imported table
+                saveState(); // Save the new state to history
                 
             } catch (error) {
                 console.error('Error parsing or building from CSV:', error);
@@ -620,16 +711,15 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         // Re-initialize the table after loading
-        updateDeleteColumnButtons();
-        updateDeleteRowButtons();
-        addCellInputListeners();
+        updateAllEventListeners();
         window.Subtitles.parseTable();
     };
 
     // --- Initial setup and Event Listeners ---
-    updateDeleteColumnButtons();
-    updateDeleteRowButtons();
-    addCellInputListeners();
+    loadTable();
+    saveState(); // Save the initial state
+
+    updateAllEventListeners();
     window.Subtitles.parseTable();
 
     btnAddLanguage.addEventListener('click', addColumn);
@@ -639,8 +729,9 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAddFromQuran.addEventListener('click', showQuranImportModal);
     btnExportTable.addEventListener('click', exportTable);
     importTableInput.addEventListener('change', importTable);
+    btnUndo.addEventListener('click', undo);
+    btnRedo.addEventListener('click', redo);
 
-    loadTable();
 
     const enableDragToScroll = (element) => {
         let isDragging = false;
