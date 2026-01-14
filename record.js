@@ -316,7 +316,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const totalProgress = jobProgress.reduce((sum, p) => sum + p, 0);
                 const overallPercentage = (totalProgress / jobs.length) * 100;
                 progressBar.style.width = `${overallPercentage}%`;
-                percentageEl.textContent = `${Math.floor(overallPercentage)}%`;
+                percentageEl.textContent = `[${Math.floor(overallPercentage)}%]`;
             };
             
             const recordingPromises = jobs.map((job, index) => 
@@ -361,7 +361,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
                 const overallPercentage = ((i + 1) / jobs.length) * 100;
                 progressBar.style.width = `${overallPercentage}%`;
-                percentageEl.textContent = `${Math.floor(overallPercentage)}%`;
+                percentageEl.textContent = `[${Math.floor(overallPercentage)}%]`;
             }
         }
         

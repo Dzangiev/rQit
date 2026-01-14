@@ -569,6 +569,8 @@ body {
     height: 100%;
     justify-content: space-between;
     gap: 10px;
+    box-sizing: border-box;
+    padding-top: 0px;
 }
 
 .table-title {
@@ -594,7 +596,6 @@ body {
 .table-container {
     overflow: auto;
     border: 1px solid #444;
-    max-width: 90vw;
     width: 100%;
     height: 100%; /* Ensure it takes full height of its flexible parent */
 }
@@ -817,12 +818,18 @@ body {
     border: 1px solid #444;
 }
 
+.record-block-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #555;
+    padding-bottom: 10px;
+}
+
 .record-block h2 {
     font-size: 20px;
     margin: 0;
     text-align: left;
-    border-bottom: 1px solid #555;
-    padding-bottom: 10px;
 }
 
 .dropdown-check-container {
@@ -893,8 +900,8 @@ body {
 }
 
 .progress-bar-container {
-    width: 100%;
-    height: 20px;
+    flex-grow: 1;
+    height: 10px;
     background-color: #1c1c1e;
     border-radius: 10px;
     overflow: hidden;
@@ -1080,6 +1087,12 @@ body {
     gap: 10px;
 }
 
+.progress-bar-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
 .progress-display {
     display: flex;
     justify-content: space-between;
@@ -1091,9 +1104,6 @@ body {
 #record-stopwatch {
     font-size: 20px;
     font-weight: 500;
-    text-align: left;
-    flex-grow: 1;
-    margin-left: 15px;
 }
 
 #record-status-text {
@@ -1102,14 +1112,11 @@ body {
 }
 
 #record-percentage {
-    font-size: 16px;
+    font-size: 14px;
     font-weight: 500;
-    text-align: right;
 }
 
-.progress-bar-container {
-    height: 10px;
-}
+
 .record-block .settings-item {
     justify-content: space-between;
 }

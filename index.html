@@ -191,14 +191,18 @@
 
                     <!-- Progress Block -->
                     <div id="record-progress-block" class="record-block hidden">
-                        <h2>Прогресс</h2> 
+                        <div class="record-block-header">
+                            <h2>Прогресс</h2>
+                            <div id="record-stopwatch">00:00:00</div>
+                        </div>
                         <div class="progress-display">
                             <div id="record-status-text"></div>
-                            <div id="record-stopwatch">00:00:00</div>
-                            <div id="record-percentage">0%</div>
                         </div>
-                        <div class="progress-bar-container">
-                            <div id="record-progress-bar" class="progress-bar"></div>
+                        <div class="progress-bar-wrapper">
+                            <div class="progress-bar-container">
+                                <div id="record-progress-bar" class="progress-bar"></div>
+                            </div>
+                            <div id="record-percentage">0%</div>
                         </div>
                     </div>
 
