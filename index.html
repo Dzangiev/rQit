@@ -204,7 +204,7 @@
                             <div class="progress-bar-container">
                                 <div id="record-progress-bar" class="progress-bar"></div>
                             </div>
-                            <div id="record-percentage">0%</div>
+                            <div id="record-percentage">[0%]</div>
                         </div>
                     </div>
 
@@ -324,92 +324,7 @@
         <div class="modal-content">
             <h2>Настройки отображения</h2>
             <div class="settings-grid">
-                <!-- Aspect Ratio -->
-                <div class="settings-item">
-                    <label for="aspect-ratio-select">Соотношение сторон</label>
-                    <select id="aspect-ratio-select" class="btn">
-                        <option value="9:16">9:16</option>
-                        <option value="16:9">16:9</option>
-                        <option value="1:1">1:1</option>
-                        <option value="3:4">3:4</option>
-                        <option value="4:3">4:3</option>
-                    </select>
-                </div>
-                <!-- Resolution -->
-                <div class="settings-item">
-                    <label for="resolution-select">Разрешение</label>
-                    <select id="resolution-select" class="btn">
-                        <option value="1080">1080p</option>
-                        <option value="720">720p</option>
-                        <option value="480">480p</option>
-                        <option value="360">360p</option>
-                    </select>
-                </div>
-
-                <!-- Primary Font Settings -->
-                <div class="settings-group">
-                    <h3>Основной шрифт (2 столбец)</h3>
-                    <div class="settings-item">
-                        <label for="primary-font-select">Шрифт</label>
-                        <select id="primary-font-select" class="btn">
-                            <option value="KFGQPC Uthmanic Script HAFS">KFGQPC</option>
-                            <option value="Inter var">Inter</option>
-                            <!-- Add other fonts here -->
-                        </select>
-                    </div>
-                    <div class="settings-item">
-                        <label for="primary-font-size-input">Размер</label>
-                        <input type="number" id="primary-font-size-input" class="btn" value="48">
-                    </div>
-                </div>
-
-                <!-- Secondary Font Settings -->
-                <div class="settings-group">
-                    <h3>Дополнительный шрифт (3+ столбец)</h3>
-                    <div class="settings-item">
-                        <label for="secondary-font-select">Шрифт</label>
-                        <select id="secondary-font-select" class="btn">
-                            <option value="Inter var">Inter</option>
-                            <option value="KFGQPC Uthmanic Script HAFS">KFGQPC</option>
-                            <!-- Add other fonts here -->
-                        </select>
-                    </div>
-                    <div class="settings-item">
-                        <label for="secondary-font-size-input">Размер</label>
-                        <input type="number" id="secondary-font-size-input" class="btn" value="24">
-                    </div>
-                </div>
-
-                <!-- Spacing -->
-                <div class="settings-item">
-                    <label for="text-spacing-input">Расстояние между текстами</label>
-                    <input type="number" id="text-spacing-input" class="btn" value="20">
-                </div>
-
-                <!-- Animation Settings -->
-                <div class="settings-group">
-                    <h3>Анимация текста</h3>
-                    <div class="settings-item">
-                        <label for="animation-type-select">Тип</label>
-                        <select id="animation-type-select" class="btn">
-                            <option value="fade">Появление/Исчезновение</option>
-                            <option value="none">Без анимации</option>
-                        </select>
-                    </div>
-                    <div class="settings-item">
-                        <label for="animation-duration-input">Длительность (сек)</label>
-                        <input type="number" id="animation-duration-input" class="btn" value="0.5" step="0.1" min="0">
-                    </div>
-                    <div class="settings-item" id="animation-easing-group">
-                        <label for="animation-easing-select">Плавность</label>
-                        <select id="animation-easing-select" class="btn">
-                            <option value="linear">Линейная</option>
-                            <option value="easeInQuad">Ease-In</option>
-                            <option value="easeOutQuad">Ease-Out</option>
-                            <option value="easeInOutQuad">Ease-In-Out</option>
-                        </select>
-                    </div>
-                </div>
+                <!-- Settings will be generated by JS -->
             </div>
             <div class="modal-buttons">
                 <button id="settings-close-btn" class="btn">Закрыть</button>
