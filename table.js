@@ -642,6 +642,62 @@ document.addEventListener('DOMContentLoaded', () => {
 
     loadTable();
 
+    const enableDragToScroll = (element) => {
+        let isDragging = false;
+        let startX;
+        let scrollLeft;
+        let hasDragged = false;
+
+        element.addEventListener('mousedown', (e) => {
+            if (e.target.closest('.btn-table-action')) {
+                return;
+            }
+            isDragging = true;
+            hasDragged = false;
+            startX = e.pageX - element.offsetLeft;
+            scrollLeft = element.scrollLeft;
+            element.style.cursor = 'grabbing';
+            element.style.userSelect = 'none';
+        });
+
+        element.addEventListener('mouseleave', () => {
+            if (isDragging) {
+                isDragging = false;
+                element.style.cursor = 'grab';
+                element.style.userSelect = 'auto';
+            }
+        });
+
+        element.addEventListener('mouseup', () => {
+            isDragging = false;
+            element.style.cursor = 'grab';
+            element.style.userSelect = 'auto';
+        });
+
+        element.addEventListener('mousemove', (e) => {
+            if (!isDragging) return;
+            hasDragged = true;
+            e.preventDefault();
+            const x = e.pageX - element.offsetLeft;
+            const walk = (x - startX) * 2; // scroll-fast
+            element.scrollLeft = scrollLeft - walk;
+        });
+
+        element.addEventListener('click', (e) => {
+            if (hasDragged) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true); // Use capture phase to prevent clicks after dragging
+
+        element.style.cursor = 'grab';
+    };
+
+    const bottomBar = document.querySelector('.table-bottom-bar');
+    if (bottomBar) {
+        enableDragToScroll(bottomBar);
+    }
+
     // --- Expose functions globally ---
     window.Table = {
         showConfirmationModal,
