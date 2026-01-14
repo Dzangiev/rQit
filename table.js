@@ -65,7 +65,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const showManualAddModal = () => {
-        // Clear old values
         manualInputH.value = '';
         manualInputM.value = '';
         manualInputS.value = '';
@@ -78,7 +77,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const populateLanguageList = () => {
-        quranLangListContainer.innerHTML = ''; // Clear previous
+        quranLangListContainer.innerHTML = '';
         const savedLangs = JSON.parse(localStorage.getItem(QURAN_LANG_STORAGE_KEY)) || ALL_QURAN_LANGUAGES.map(l => l.name);
 
         const allLabel = document.createElement('label');
@@ -96,8 +95,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const langCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox');
 
         const updateSelectAllState = () => {
-            const allChecked = Array.from(langCheckboxes).every(cb => cb.checked);
-            selectAllCheckbox.checked = allChecked;
+            selectAllCheckbox.checked = Array.from(langCheckboxes).every(cb => cb.checked);
         };
 
         updateSelectAllState();
@@ -142,7 +140,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     manualAddSaveBtn.addEventListener('click', () => {
-        saveState();
         const h = parseInt(manualInputH.value || 0, 10);
         const m = parseInt(manualInputM.value || 0, 10);
         const s = parseInt(manualInputS.value || 0, 10);
@@ -156,7 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeInSeconds = h * 3600 + m * 60 + s + ds / 10;
         insertTimestampRow(timeInSeconds);
         hideManualAddModal();
-        saveTable();
     });
 
     quranImportConfirmBtn.addEventListener('click', () => {
@@ -168,8 +164,6 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Пожалуйста, введите корректные значения для суры и аятов.');
             return;
         }
-
-        saveState();
         importFromQuran(surah, ayahStart, ayahEnd);
     });
 
@@ -223,13 +217,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         updateAllEventListeners();
         window.Subtitles.parseTable();
-        saveTable(); // Still save to localStorage for persistence
+        saveTable();
     };
 
     const saveState = () => {
-        // Clear redo stack
         history = history.slice(0, historyIndex + 1);
-        // Push new state
         history.push(getTableData());
         historyIndex++;
         updateUndoRedoButtons();
@@ -259,45 +251,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Table Manipulation Logic ---
     const importFromQuran = async (surah, ayahStart, ayahEnd) => {
-        const selectedLangCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox:checked');
-        const selectedLangNames = Array.from(selectedLangCheckboxes).map(cb => cb.value);
-
-        localStorage.setItem(QURAN_LANG_STORAGE_KEY, JSON.stringify(selectedLangNames));
-
-        const languages = ALL_QURAN_LANGUAGES.filter(lang => selectedLangNames.includes(lang.name));
-
-        if (languages.length === 0) {
-            alert('Пожалуйста, выберите хотя бы один язык для импорта.');
-            return;
-        }
-
         try {
-            const responses = await Promise.all(
-                languages.map(lang => fetch(`quran/${lang.file}`))
-            );
-
-            const datasets = await Promise.all(
-                responses.map(res => res.json())
-            );
-
-            const quranData = {};
-            languages.forEach((lang, index) => {
-                quranData[lang.name] = datasets[index];
-            });
-
-            // Clear table columns except the first one
-            const header = mainTable.querySelector('thead tr');
-            while (header.children.length > 1) {
-                header.removeChild(header.lastChild);
+            const selectedLangCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox:checked');
+            const selectedLangNames = Array.from(selectedLangCheckboxes).map(cb => cb.value);
+            localStorage.setItem(QURAN_LANG_STORAGE_KEY, JSON.stringify(selectedLangNames));
+            const languages = ALL_QURAN_LANGUAGES.filter(lang => selectedLangNames.includes(lang.name));
+            if (languages.length === 0) {
+                alert('Пожалуйста, выберите хотя бы один язык для импорта.');
+                return;
             }
-            const rows = mainTable.querySelectorAll('tbody tr');
-            rows.forEach(row => {
-                 while (row.children.length > 1) {
-                    row.removeChild(row.lastChild);
-                }
-            });
 
-            // Add new language columns
+            const responses = await Promise.all(languages.map(lang => fetch(`quran/${lang.file}`)));
+            const datasets = await Promise.all(responses.map(res => res.json()));
+            const quranData = {};
+            languages.forEach((lang, index) => { quranData[lang.name] = datasets[index]; });
+
+            const header = mainTable.querySelector('thead tr');
+            while (header.children.length > 1) header.removeChild(header.lastChild);
+            const rows = mainTable.querySelectorAll('tbody tr');
+            rows.forEach(row => { while (row.children.length > 1) row.removeChild(row.lastChild); });
+
             languages.forEach(lang => {
                 const newHeaderCell = document.createElement('th');
                 newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${lang.name}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
@@ -307,23 +280,17 @@ document.addEventListener('DOMContentLoaded', () => {
             const tBody = mainTable.querySelector('tbody');
             const numRowsToAdd = ayahEnd - ayahStart + 1;
             const existingRows = tBody.rows.length;
-
             for (let i = 0; i < numRowsToAdd; i++) {
                 const ayah = ayahStart + i;
                 let row;
-
                 if (i < existingRows) {
                     row = tBody.rows[i];
-                    // Clear existing cells in the row
-                    while(row.cells.length > 1) {
-                        row.deleteCell(1);
-                    }
+                    while (row.cells.length > 1) row.deleteCell(1);
                 } else {
                     row = tBody.insertRow();
                     const firstCell = row.insertCell();
                     firstCell.innerHTML = `<div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content"></div></div>`;
                 }
-                
                 languages.forEach(lang => {
                     const cell = row.insertCell();
                     const surahData = quranData[lang.name][surah];
@@ -332,25 +299,21 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             }
             
-            // Remove extra rows if any
-            while (tBody.rows.length > numRowsToAdd) {
-                tBody.deleteRow(numRowsToAdd);
-            }
-
+            while (tBody.rows.length > numRowsToAdd) tBody.deleteRow(numRowsToAdd);
 
             updateAllEventListeners();
             window.Subtitles.parseTable();
             saveTable();
+            saveState();
             hideQuranImportModal();
-
         } catch (error) {
             console.error('Error loading Quran data:', error);
             alert('Не удалось загрузить данные Корана.');
+            undo();
         }
     };
 
     const addColumn = () => {
-        saveState();
         const header = mainTable.querySelector('thead tr');
         const newHeaderCell = document.createElement('th');
         newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">New Language</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
@@ -365,10 +328,10 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
+        saveState();
     };
 
     const addRow = () => {
-        saveState();
         const tBody = mainTable.querySelector('tbody');
         const newRow = document.createElement('tr');
         const colCount = mainTable.querySelector('thead tr').children.length;
@@ -381,16 +344,14 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
+        saveState();
     };
     
     const deleteColumn = (e) => {
         const btn = e.target.closest('.btn-delete-col');
         if (!btn) return;
-
-        saveState();
         const th = btn.closest('th');
         const index = Array.from(th.parentNode.children).indexOf(th);
-
         if (index < 2) return;
 
         const header = mainTable.querySelector('thead tr');
@@ -405,23 +366,23 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
+        saveState();
     };
 
     const deleteRow = (e) => {
         const btn = e.target.closest('.btn-delete-row');
         if (!btn) return;
-
         if (mainTable.querySelector('tbody').rows.length <= 1) return;
-        saveState();
+        
         const row = btn.closest('tr');
         row.parentNode.removeChild(row);
         updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
+        saveState();
     };
     
     const clearTable = () => {
-        saveState();
         const tBody = mainTable.querySelector('tbody');
         tBody.innerHTML = '';
         const header = mainTable.querySelector('thead tr');
@@ -441,43 +402,33 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAllEventListeners();
         window.Subtitles.parseTable();
         saveTable();
+        saveState();
     };
 
     const clearAllTimestamps = () => {
-        saveState();
         const timeCells = mainTable.querySelectorAll('tbody tr td:first-child .cell-content');
         timeCells.forEach(cell => {
             cell.innerText = '';
         });
         sortAndCompactTable();
-        saveTable();
+        saveState();
     };
 
     const sortAndCompactTable = () => {
         const tBody = mainTable.querySelector('tbody');
         if (!tBody) return;
 
-        // 1. Get all timestamp cells
         const timeCells = Array.from(tBody.querySelectorAll('tr td:first-child .cell-content'));
-        
-        // 2. Read all timestamp values
         const timeValues = timeCells
             .map(cell => window.Subtitles.parseTimestamp(cell.innerText))
-            .filter(time => time !== null); // Filter out null/invalid times
+            .filter(time => time !== null);
 
-        // 3. Sort the valid time values
         timeValues.sort((a, b) => a - b);
 
-        // 4. Write the sorted values back into the cells
         timeCells.forEach((cell, index) => {
-            if (index < timeValues.length) {
-                cell.innerText = formatTime(timeValues[index]);
-            } else {
-                cell.innerText = '';
-            }
+            cell.innerText = (index < timeValues.length) ? formatTime(timeValues[index]) : '';
         });
         
-        // 5. Re-parse subtitles to update waveform markers
         window.Subtitles.parseTable();
         saveTable();
     };
@@ -505,27 +456,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const cells = mainTable.querySelectorAll('td .cell-content[contenteditable="true"], th .header-text[contenteditable="true"]');
         cells.forEach(cell => {
             let initialValue = '';
-
-            const onFocus = (event) => {
-                initialValue = event.target.innerText;
-            };
-
-            const onBlur = (event) => {
-                if (event.target.innerText !== initialValue) {
-                    saveState();
-                }
-            };
+            const onFocus = (event) => { initialValue = event.target.innerText; };
+            const onBlur = (event) => { if (event.target.innerText !== initialValue) { saveState(); } };
+            const onInput = () => { window.Subtitles.parseTable(); saveTable(); };
             
             cell.removeEventListener('focus', onFocus);
             cell.addEventListener('focus', onFocus);
             cell.removeEventListener('blur', onBlur);
             cell.addEventListener('blur', onBlur);
-
-            // This is for live subtitle preview and persistence, not for undo/redo
-            const onInput = () => {
-                window.Subtitles.parseTable();
-                saveTable();
-            };
             cell.removeEventListener('input', onInput);
             cell.addEventListener('input', onInput);
         });
@@ -555,7 +493,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
         
-        saveState();
         const formattedTime = formatTime(time);
         const tBody = mainTable.querySelector('tbody');
         
@@ -575,25 +512,22 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         sortAndCompactTable();
-        saveTable();
+        saveState();
     };
 
     const clearTimestampByIndex = (index) => {
-        saveState();
         const tBody = mainTable.querySelector('tbody');
         if (tBody && tBody.rows.length > index) {
             const cell = tBody.rows[index].cells[0]?.querySelector('.cell-content');
             if (cell) cell.innerText = '';
             sortAndCompactTable();
-            saveTable();
+            saveState();
         }
     };
 
     const exportTable = () => {
         const table = mainTable;
         let csv = [];
-        
-        // Head
         const headers = [];
         table.querySelectorAll('thead th').forEach(th => {
             const text = th.querySelector('.header-text')?.innerText || th.innerText;
@@ -601,7 +535,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         csv.push(headers.join(','));
 
-        // Body
         table.querySelectorAll('tbody tr').forEach(row => {
             const rowData = [];
             row.querySelectorAll('td').forEach(td => {
@@ -625,68 +558,37 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const parseCSV = (str) => {
         const arr = [];
-        let quote = false;
-        let row = 0;
-        let col = 0;
-        let c = '';
+        let quote = false, row = 0, col = 0;
         for (let i = 0; i < str.length; i++) {
-            let cc = str[i];
-            let nc = str[i + 1];
+            let cc = str[i], nc = str[i + 1];
             arr[row] = arr[row] || [];
             arr[row][col] = arr[row][col] || '';
-
-            if (cc == '"' && quote && nc == '"') {
-                arr[row][col] += cc;
-                ++i;
-                continue;
-            }
-            if (cc == '"') {
-                quote = !quote;
-                continue;
-            }
-            if (cc == ',' && !quote) {
-                ++col;
-                continue;
-            }
-            if (cc == '\n' && !quote) {
-                ++row;
-                col = 0;
-                continue;
-            }
-
+            if (cc == '"' && quote && nc == '"') { arr[row][col] += cc; ++i; continue; }
+            if (cc == '"') { quote = !quote; continue; }
+            if (cc == ',' && !quote) { ++col; continue; }
+            if (cc == '\n' && !quote) { ++row; col = 0; continue; }
             arr[row][col] += cc;
         }
         return arr;
     };
 
     const importTable = (event) => {
-        saveState();
         const file = event.target.files[0];
-        if (!file) {
-            return;
-        }
+        if (!file) return;
         const reader = new FileReader();
         reader.onload = (e) => {
             try {
                 const csvData = e.target.result;
                 const parsedData = parseCSV(csvData);
-
-                if (!parsedData || parsedData.length < 1) {
-                    throw new Error("CSV data is empty or invalid.");
-                }
-                
-                const tableData = {
-                    headers: parsedData.shift() || [],
-                    body: parsedData.filter(row => row.length > 0 && (row.length > 1 || row[0] !== ''))
-                };
-
+                if (!parsedData || parsedData.length < 1) throw new Error("CSV data is empty.");
+                const tableData = { headers: parsedData.shift() || [], body: parsedData.filter(row => row.length > 0 && (row.length > 1 || row[0] !== '')) };
                 restoreTableFromData(tableData);
-                saveTable(); // Persist imported table
-                saveState(); // Save the new state to history
-                
+                saveTable(); 
+                saveState();
             } catch (error) {
                 console.error('Error parsing or building from CSV:', error);
                 alert('Ошибка: Не удалось импортировать таблицу из CSV файла.');
+                undo();
             }
         };
         reader.readAsText(file);
@@ -703,24 +605,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const loadTable = () => {
         const tableHead = localStorage.getItem('tableHead');
         const tableBody = localStorage.getItem('tableBody');
-        if (tableHead) {
-            mainTable.querySelector('thead').innerHTML = tableHead;
-        }
-        if (tableBody) {
-            mainTable.querySelector('tbody').innerHTML = tableBody;
-        }
-        
-        // Re-initialize the table after loading
+        if (tableHead) mainTable.querySelector('thead').innerHTML = tableHead;
+        if (tableBody) mainTable.querySelector('tbody').innerHTML = tableBody;
         updateAllEventListeners();
         window.Subtitles.parseTable();
     };
 
     // --- Initial setup and Event Listeners ---
     loadTable();
-    saveState(); // Save the initial state
-
-    updateAllEventListeners();
-    window.Subtitles.parseTable();
+    saveState();
 
     btnAddLanguage.addEventListener('click', addColumn);
     btnAddRowBottom.addEventListener('click', addRow);
@@ -734,68 +627,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     const enableDragToScroll = (element) => {
-        let isDragging = false;
-        let startX;
-        let scrollLeft;
-        let hasDragged = false;
-
+        let isDragging = false, startX, scrollLeft, hasDragged = false;
         element.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.btn-table-action')) {
-                return;
-            }
-            isDragging = true;
-            hasDragged = false;
+            if (e.target.closest('.btn-table-action')) return;
+            isDragging = true; hasDragged = false;
             startX = e.pageX - element.offsetLeft;
             scrollLeft = element.scrollLeft;
             element.style.cursor = 'grabbing';
             element.style.userSelect = 'none';
         });
-
-        element.addEventListener('mouseleave', () => {
-            if (isDragging) {
-                isDragging = false;
-                element.style.cursor = 'grab';
-                element.style.userSelect = 'auto';
-            }
-        });
-
-        element.addEventListener('mouseup', () => {
-            isDragging = false;
-            element.style.cursor = 'grab';
-            element.style.userSelect = 'auto';
-        });
-
+        element.addEventListener('mouseleave', () => { isDragging = false; element.style.cursor = 'grab'; element.style.userSelect = 'auto'; });
+        element.addEventListener('mouseup', () => { isDragging = false; element.style.cursor = 'grab'; element.style.userSelect = 'auto'; });
         element.addEventListener('mousemove', (e) => {
             if (!isDragging) return;
-            hasDragged = true;
-            e.preventDefault();
+            hasDragged = true; e.preventDefault();
             const x = e.pageX - element.offsetLeft;
-            const walk = (x - startX) * 2; // scroll-fast
+            const walk = (x - startX) * 2;
             element.scrollLeft = scrollLeft - walk;
         });
-
-        element.addEventListener('click', (e) => {
-            if (hasDragged) {
-                e.preventDefault();
-                e.stopPropagation();
-            }
-        }, true); // Use capture phase to prevent clicks after dragging
-
+        element.addEventListener('click', (e) => { if (hasDragged) { e.preventDefault(); e.stopPropagation(); } }, true);
         element.style.cursor = 'grab';
     };
 
     const bottomBar = document.querySelector('.table-bottom-bar');
-    if (bottomBar) {
-        enableDragToScroll(bottomBar);
-    }
+    if (bottomBar) enableDragToScroll(bottomBar);
 
-    // --- Expose functions globally ---
-    window.Table = {
-        showConfirmationModal,
-        clearAllTimestamps,
-        addRow,
-        insertTimestampRow,
-        clearTimestampByIndex,
-        mainTable
-    };
+    window.Table = { showConfirmationModal, clearAllTimestamps, addRow, insertTimestampRow, clearTimestampByIndex, mainTable };
 });
