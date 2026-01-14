@@ -1148,7 +1148,7 @@ html.is-mobile {
     overflow: hidden;
 }
 
-html.is-mobile body {
+body.is-mobile {
     transform: scale(0.8);
     transform-origin: top left;
     width: 125vw;

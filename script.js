@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const mobileRegex = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
         if (mobileRegex.test(navigator.userAgent)) {
             document.documentElement.classList.add('is-mobile');
+            document.body.classList.add('is-mobile');
         }
     }
     detectMobile();
