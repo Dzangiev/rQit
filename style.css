@@ -1,6 +1,13 @@
 @font-face {
-    font-family: 'Aseret Mono';
+    font-family: 'Azeret Mono';
     src: url('Fonts/AzeretMono-VariableFont_wght.ttf') format('truetype-variations');
+}
+
+@font-face {
+    font-family: 'Roboto Mono var';
+    font-weight: 100 900;
+    font-display: swap;
+    src: url('Fonts/RobotoMono-VariableFont_wght.ttf') format('truetype-variations');
 }
 
 @font-face {
@@ -237,8 +244,9 @@ body {
   -webkit-box-orient: vertical;
   line-clamp: 2;
   overflow: hidden;
+  font-family: 'KFGQPC Uthmanic Script HAFS';
 
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1.4;
   color: #fff;
 }
@@ -656,6 +664,7 @@ body {
 #main-table td:nth-child(2) .cell-content {
     font-family: 'KFGQPC Uthmanic Script HAFS', sans-serif;
     direction: rtl;
+    font-size: 20px;
 }
 
 .btn-delete-col, .btn-delete-row {
@@ -924,7 +933,7 @@ body {
 #record-stopwatch {
     text-align: center;
     font-size: 24px;
-    font-weight: bold;
+    font-family: 'Azeret Mono';
     letter-spacing: 2px;
 }
 
@@ -945,6 +954,7 @@ body {
 
 #record-percentage {
     text-align: center;
+    font-family: 'Azeret Mono';
     font-size: 14px;
 }
 
@@ -1176,11 +1186,13 @@ body.is-mobile {
 .table-undo-redo-controls {
     display: flex;
     flex-direction: column;
+    justify-content: space-between;
     gap: 5px;
+    width: 100%;
 }
 
 .btn--table-icon-only {
-    width: 70px;
+    width: 50px;
     height: calc(35px - 5px); /* Half height of a normal button, minus gap */
     padding: 0;
 }
@@ -1208,11 +1220,11 @@ body.is-mobile {
     display: flex;
     flex-direction: column;
     align-items: center;
-    font-size: 14px;
+    font-size: 16px;
     line-height: 1.2;
     color: #ccc;
     white-space: nowrap;
     justify-content: center;
     text-align: center;
-    font-family: 'Aseret Mono';
+    font-family: 'Azeret Mono';
 }

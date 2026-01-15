@@ -250,6 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
     // --- Table Manipulation Logic ---
+    const toEasternArabicNumerals = (num) => {
+        const easternArabicNumerals = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+        return String(num).split('').map(digit => easternArabicNumerals[parseInt(digit)]).join('');
+    };
+
     const importFromQuran = async (surah, ayahStart, ayahEnd) => {
         try {
             const selectedLangCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox:checked');
@@ -295,7 +300,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     const cell = row.insertCell();
                     const surahData = quranData[lang.name][surah];
                     const verseData = surahData ? surahData.find(v => v.verse === ayah) : null;
-                    cell.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${verseData ? verseData.text : ''}</div></div>`;
+                    let cellText = verseData ? verseData.text : '';
+                    if (lang.name === 'quran' && verseData) {
+                        cellText += ` ${toEasternArabicNumerals(ayah)}`;
+                    }
+                    cell.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${cellText}</div></div>`;
                 });
             }
             
