@@ -310,6 +310,7 @@ async function init() {
         const nextBtn = document.getElementById('display-next-btn');
         const settingsModal = document.getElementById('display-settings-modal');
         const closeSettingsBtn = document.getElementById('settings-close-btn');
+        const animationScrubSlider = document.getElementById('animation-scrub-slider');
 
         let subtitles = [];
         let duration = 0;
@@ -347,6 +348,7 @@ async function init() {
             currentIndex = -1;
             playIcon.classList.remove('icon-pause');
             playIcon.classList.add('icon-play');
+            animationScrubSlider.value = 0; // Reset slider
             update();
         };
 
@@ -387,6 +389,7 @@ async function init() {
                     drawText('', '', 0);
                 }
                 updateCurrentTime();
+                animationScrubSlider.value = currentTime; // Update slider
                 prevBtn.disabled = true;
                 nextBtn.disabled = true;
                 return;
@@ -400,6 +403,7 @@ async function init() {
             let secondaryText = (selectedVersionIndex > 0) ? (currentSub.texts[parseInt(versionSelect.value, 10)] || '') : '';
             drawText(primaryText, secondaryText, opacity);
             updateCurrentTime();
+            animationScrubSlider.value = currentTime; // Update slider
             const prevSubTime = (currentIndex > 0) ? subtitles[currentIndex - 1].time : 0;
             prevBtn.disabled = currentTime <= prevSubTime || currentIndex === 0;
             nextBtn.disabled = currentIndex >= subtitles.length - 1;
@@ -434,6 +438,7 @@ async function init() {
                 page.querySelector('.display-controls-area').classList.add('hidden');
                 duration = 0;
                 stop();
+                animationScrubSlider.max = 0; // Set max slider value
                 return;
             } else {
                 canvas.parentElement.classList.remove('hidden');
@@ -451,6 +456,7 @@ async function init() {
             }
             
             duration = subtitles.length > 0 ? subtitles[subtitles.length - 1].time : 0;
+            animationScrubSlider.max = duration; // Set max slider value
             stop();
             updateTotalTime();
             currentIndex = -1;
@@ -479,6 +485,12 @@ async function init() {
             currentIndex = -1; // Reset to redraw with new texts
             update();
         });
+        animationScrubSlider.addEventListener('input', () => {
+            currentTime = parseFloat(animationScrubSlider.value);
+            pause();
+            update();
+        });
+
 
         const observer = new MutationObserver((mutations) => {
             mutations.forEach((mutation) => {

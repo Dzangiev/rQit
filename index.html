@@ -144,6 +144,7 @@
                             <button class="btn-table-action" id="btn-add-language">Добавить язык</button>
                             <button class="btn-table-action" id="btn-clear-table">Очистить всю таблицу</button>
                             <button class="btn-table-action" id="btn-add-row-bottom">Добавить строку</button>
+                            <button class="btn-table-action" id="btn-split-text" disabled>Разделить</button>
                             <button class="btn-table-action" id="btn-add-from-quran">Добавить из Корана</button>
                             <button class="btn-table-action" id="btn-export-table">Экспорт таблицы</button>
                             <label for="import-table-input" class="btn-table-action">Импорт таблицы</label>
@@ -162,18 +163,21 @@
 
                     <div class="display-controls-area"> <!-- Container for all controls below canvas -->
                         <div class="display-top-row-controls">
-                            <button id="display-settings-btn" class="btn btn--small"><span class="icon icon-gear"></span></button>
+                            <div class="display-settings-left-group">
+                                <button id="display-settings-btn" class="btn btn--small"><span class="icon icon-gear"></span></button>
+                                <div class="version-select-container">
+                                    <select id="version-select" class="btn btn--nobg">
+                                        <option value="default">Дефолтная версия</option>
+                                    </select>
+                                </div>
+                            </div>
                             <div id="display-time" class="time-display-stack">
                                 <div>00:00:00.00</div>
                                 <div style="color: #777;">00:00:00.00</div>
                             </div>
                         </div>
                         <div class="display-bottom-row-controls">
-                            <div class="version-select-container">
-                                <select id="version-select" class="btn btn--nobg">
-                                    <option value="default">Дефолтная версия</option>
-                                </select>
-                            </div>
+                            <input type="range" id="animation-scrub-slider" min="0" max="100" value="0" step="0.01" class="slider">
                             <div class="display-buttons-right">
                                 <button id="display-prev-btn" class="btn btn--small"><span class="icon icon-skip-back"></span></button>
                                 <button id="display-play-pause-btn" class="btn btn--small"><span class="icon icon-play"></span></button>

@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const importTableInput = document.getElementById('import-table-input');
     const btnUndo = document.getElementById('btn-undo');
     const btnRedo = document.getElementById('btn-redo');
+    const btnSplitText = document.getElementById('btn-split-text');
 
     // --- Confirmation Modal DOM Elements ---
     const confirmationModal = document.getElementById('confirmation-modal');
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const quranLangListContainer = document.getElementById('quran-lang-list-container');
 
     let onConfirmCallback = null;
+    let activeCellForSplit = null;
 
     // --- Undo/Redo State ---
     let history = [];
@@ -356,6 +358,97 @@ document.addEventListener('DOMContentLoaded', () => {
         saveState();
     };
     
+    const insertRowAfter = (currentRow) => {
+        const tBody = mainTable.querySelector('tbody');
+        const newRow = document.createElement('tr');
+        const colCount = mainTable.querySelector('thead tr').children.length;
+        let cells = `<td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content"></div></div></td>`;
+        for (let i = 1; i < colCount; i++) {
+            cells += '<td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div></td>';
+        }
+        newRow.innerHTML = cells;
+        tBody.insertBefore(newRow, currentRow.nextSibling);
+        updateAllEventListeners();
+        return newRow;
+    };
+
+    const isRowEmpty = (row) => {
+        if (!row) return false;
+        const cells = row.querySelectorAll('.cell-content[contenteditable="true"]');
+        return Array.from(cells).every(cell => cell.innerText.trim() === '');
+    };
+
+    const updateSplitButtonState = () => {
+        if (!activeCellForSplit) {
+            btnSplitText.disabled = true;
+            return;
+        }
+
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) {
+            btnSplitText.disabled = true;
+            return;
+        }
+
+        const range = selection.getRangeAt(0);
+        const cellText = activeCellForSplit.innerText;
+        const cursorPosition = range.startOffset;
+
+        // Check if the cursor is inside the active cell
+        if (!activeCellForSplit.contains(range.commonAncestorContainer)) {
+             btnSplitText.disabled = true;
+             return;
+        }
+
+        if (cursorPosition > 0 && cursorPosition < cellText.length) {
+            btnSplitText.disabled = false;
+        } else {
+            btnSplitText.disabled = true;
+        }
+    };
+
+    const splitText = () => {
+        if (!activeCellForSplit) {
+            return;
+        }
+
+        const selection = window.getSelection();
+        if (!selection || selection.rangeCount === 0) return;
+
+        const range = selection.getRangeAt(0);
+        const cursorPosition = range.startOffset;
+
+        const originalText = activeCellForSplit.innerText;
+        const textBeforeCursor = originalText.substring(0, cursorPosition);
+        const textAfterCursor = originalText.substring(cursorPosition);
+
+        activeCellForSplit.innerText = textBeforeCursor;
+
+        const currentRow = activeCellForSplit.closest('tr');
+        const nextRow = currentRow.nextElementSibling;
+        const cellIndex = activeCellForSplit.closest('td').cellIndex;
+
+        if (nextRow && isRowEmpty(nextRow)) {
+            const targetCell = nextRow.cells[cellIndex].querySelector('.cell-content');
+            if (targetCell) {
+                targetCell.innerText = textAfterCursor;
+            }
+        } else {
+            const newRow = insertRowAfter(currentRow);
+            const targetCell = newRow.cells[cellIndex].querySelector('.cell-content');
+            if (targetCell) {
+                targetCell.innerText = textAfterCursor;
+            }
+        }
+
+        activeCellForSplit.blur();
+        updateSplitButtonState();
+        window.Subtitles.parseTable();
+        saveTable();
+        saveState();
+        sortAndCompactTable();
+    };
+
     const deleteColumn = (e) => {
         const btn = e.target.closest('.btn-delete-col');
         if (!btn) return;
@@ -465,9 +558,28 @@ document.addEventListener('DOMContentLoaded', () => {
         const cells = mainTable.querySelectorAll('td .cell-content[contenteditable="true"], th .header-text[contenteditable="true"]');
         cells.forEach(cell => {
             let initialValue = '';
-            const onFocus = (event) => { initialValue = event.target.innerText; };
-            const onBlur = (event) => { if (event.target.innerText !== initialValue) { saveState(); } };
-            const onInput = () => { window.Subtitles.parseTable(); saveTable(); };
+
+            const onFocus = (event) => {
+                initialValue = event.target.innerText;
+                const td = event.target.closest('td');
+                if (td && td.cellIndex === 1) { // Second column
+                    activeCellForSplit = event.target;
+                    updateSplitButtonState();
+                }
+            };
+            const onBlur = (event) => {
+                if (event.target.innerText !== initialValue) {
+                    saveState();
+                }
+                if (activeCellForSplit === event.target) {
+                    activeCellForSplit = null;
+                    updateSplitButtonState();
+                }
+            };
+            const onInput = () => {
+                window.Subtitles.parseTable();
+                saveTable();
+            };
             
             cell.removeEventListener('focus', onFocus);
             cell.addEventListener('focus', onFocus);
@@ -478,10 +590,20 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
     
+    let isSelectionListenerAttached = false;
     const updateAllEventListeners = () => {
         updateDeleteColumnButtons();
         updateDeleteRowButtons();
         addCellInputListeners();
+
+        if (!isSelectionListenerAttached) {
+            document.addEventListener('selectionchange', () => {
+                if(activeCellForSplit && document.activeElement === activeCellForSplit) {
+                    updateSplitButtonState();
+                }
+            });
+            isSelectionListenerAttached = true;
+        }
     };
 
     const formatTime = (seconds) => {
@@ -633,6 +755,11 @@ document.addEventListener('DOMContentLoaded', () => {
     importTableInput.addEventListener('change', importTable);
     btnUndo.addEventListener('click', undo);
     btnRedo.addEventListener('click', redo);
+
+    btnSplitText.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+    });
+    btnSplitText.addEventListener('click', splitText);
 
 
     const enableDragToScroll = (element) => {
