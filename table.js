@@ -37,8 +37,20 @@ document.addEventListener('DOMContentLoaded', () => {
     const quranLangCollapsibleTrigger = document.getElementById('quran-lang-collapsible-trigger');
     const quranLangListContainer = document.getElementById('quran-lang-list-container');
 
+    // --- Edit Timestamp Modal DOM Elements ---
+    const editTimestampModal = document.getElementById('edit-timestamp-modal');
+    const editInputH = document.getElementById('edit-h');
+    const editInputM = document.getElementById('edit-m');
+    const editInputS = document.getElementById('edit-s');
+    const editInputCS = document.getElementById('edit-cs');
+    const editTimestampSaveBtn = document.getElementById('edit-timestamp-save-btn');
+    const editTimestampDeleteBtn = document.getElementById('edit-timestamp-delete-btn');
+    const editTimestampCancelBtn = document.getElementById('edit-timestamp-cancel-btn');
+
     let onConfirmCallback = null;
     let activeCellForSplit = null;
+    let editingTimestampRowIndex = -1; // To store the index of the row being edited
+    let isSplittingText = false; // New flag to prevent duplicate saveState calls during splitting
 
     // --- Undo/Redo State ---
     let history = [];
@@ -76,6 +88,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const hideManualAddModal = () => {
         manualAddModal.classList.add('hidden');
+    };
+
+    const showEditTimestampModal = (rowIndex, timeInSeconds) => {
+        editingTimestampRowIndex = rowIndex;
+        const h = Math.floor(timeInSeconds / 3600);
+        const m = Math.floor((timeInSeconds % 3600) / 60);
+        const s = Math.floor(timeInSeconds % 60);
+        const cs = Math.floor((timeInSeconds - Math.floor(timeInSeconds)) * 100);
+
+        editInputH.value = h.toString().padStart(2, '0');
+        editInputM.value = m.toString().padStart(2, '0');
+        editInputS.value = s.toString().padStart(2, '0');
+        editInputCS.value = cs.toString().padStart(2, '0');
+        editTimestampModal.classList.remove('hidden');
+    };
+
+    const hideEditTimestampModal = () => {
+        editTimestampModal.classList.add('hidden');
+        editingTimestampRowIndex = -1;
     };
 
     const populateLanguageList = () => {
@@ -156,6 +187,28 @@ document.addEventListener('DOMContentLoaded', () => {
         insertTimestampRow(timeInSeconds);
         hideManualAddModal();
     });
+
+    editTimestampSaveBtn.addEventListener('click', () => {
+        const h = parseInt(editInputH.value || 0, 10);
+        const m = parseInt(editInputM.value || 0, 10);
+        const s = parseInt(editInputS.value || 0, 10);
+        const cs = parseInt(editInputCS.value || 0, 10);
+
+        if (h > 99 || m > 59 || s > 59 || cs > 99 || h < 0 || m < 0 || s < 0 || cs < 0) {
+            alert('Неверный формат времени.');
+            return;
+        }
+        
+        saveEditedTimestamp(h * 3600 + m * 60 + s + cs / 100);
+        hideEditTimestampModal();
+    });
+
+    editTimestampDeleteBtn.addEventListener('click', () => {
+        deleteTimestamp(editingTimestampRowIndex);
+        hideEditTimestampModal();
+    });
+
+    editTimestampCancelBtn.addEventListener('click', hideEditTimestampModal);
 
     quranImportConfirmBtn.addEventListener('click', () => {
         const surah = parseInt(quranSurahInput.value, 10);
@@ -324,6 +377,32 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const saveEditedTimestamp = (newTimeInSeconds) => {
+        if (editingTimestampRowIndex === -1) return;
+
+        const row = mainTable.querySelector('tbody').rows[editingTimestampRowIndex];
+        const timeCell = row.cells[0]?.querySelector('.cell-content');
+        sortAndCompactTable();
+        saveState();
+    };
+
+    const deleteTimestamp = (rowIndex) => {
+        const tBody = mainTable.querySelector('tbody');
+        if (tBody && tBody.rows.length > rowIndex) {
+            const timeCell = tBody.rows[rowIndex].cells[0]?.querySelector('.cell-content');
+            if (timeCell) {
+                timeCell.innerText = ''; // Clear only the timestamp
+            }
+            // The rest of the row's content remains untouched.
+            
+            window.Subtitles.parseTable();
+            saveTable();
+                    sortAndCompactTable();
+                    saveState(); // User explicitly asked for sorting to be called
+        }
+    };
+
+
     const addColumn = () => {
         const header = mainTable.querySelector('thead tr');
         const newHeaderCell = document.createElement('th');
@@ -412,6 +491,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        isSplittingText = true; // Set flag to true
+
         const selection = window.getSelection();
         if (!selection || selection.rangeCount === 0) return;
 
@@ -445,8 +526,9 @@ document.addEventListener('DOMContentLoaded', () => {
         updateSplitButtonState();
         window.Subtitles.parseTable();
         saveTable();
-        saveState();
         sortAndCompactTable();
+        saveState();
+        isSplittingText = false; // Reset flag to false
     };
 
     const deleteColumn = (e) => {
@@ -568,7 +650,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             };
             const onBlur = (event) => {
-                if (event.target.innerText !== initialValue) {
+                if (event.target.innerText !== initialValue && !isSplittingText) { // Only saveState if not splitting
                     saveState();
                 }
                 if (activeCellForSplit === event.target) {
@@ -588,6 +670,23 @@ document.addEventListener('DOMContentLoaded', () => {
             cell.removeEventListener('input', onInput);
             cell.addEventListener('input', onInput);
         });
+
+        // Add click listener for timestamp cells (first column)
+        const timestampCells = mainTable.querySelectorAll('tbody tr td:first-child .cell-content');
+        timestampCells.forEach((cell, index) => {
+            cell.removeEventListener('click', handleTimestampCellClick); // Prevent duplicate listeners
+            cell.addEventListener('click', (event) => handleTimestampCellClick(event, index));
+        });
+    };
+
+    const handleTimestampCellClick = (event, rowIndex) => {
+        const cellContent = event.target.innerText;
+        const timeInSeconds = window.Subtitles.parseTimestamp(cellContent);
+        if (timeInSeconds !== null) {
+            showEditTimestampModal(rowIndex, timeInSeconds);
+        } else {
+            showEditTimestampModal(rowIndex, 0); // Open with 0 if timestamp is empty/invalid
+        }
     };
     
     let isSelectionListenerAttached = false;

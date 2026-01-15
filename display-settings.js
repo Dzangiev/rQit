@@ -405,7 +405,7 @@ async function init() {
             updateCurrentTime();
             animationScrubSlider.value = currentTime; // Update slider
             const prevSubTime = (currentIndex > 0) ? subtitles[currentIndex - 1].time : 0;
-            prevBtn.disabled = currentTime <= prevSubTime || currentIndex === 0;
+            prevBtn.disabled = currentIndex === 0 && currentTime < 0.1;
             nextBtn.disabled = currentIndex >= subtitles.length - 1;
         };
 

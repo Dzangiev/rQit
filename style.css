@@ -39,11 +39,12 @@
 
 body {
     margin: 0;
-    font-family: 'Inter var', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    font-family: 'Inter var', -apple-system, BlinkMacMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: #111111;
     color: #ffffff;
     box-sizing: border-box;
     height: calc(var(--vh, 1vh) * 100);
+    -webkit-tap-highlight-color: transparent; /* Remove blue tap highlight on mobile */
 }
 
 #content .page {
@@ -387,7 +388,7 @@ body {
     border-radius: 14px;
     text-align: center;
     border: 1px solid #444;
-    max-width: 100%;
+    width: 100%;
     margin: 20px;
 }
 
@@ -800,6 +801,31 @@ body {
     background-color: #444;
 }
 
+.select-setting {
+    -webkit-appearance: none;
+    appearance: none;
+    display: block; /* Ensures it takes up full width if needed */
+    padding: 8px 15px; /* Adjust padding as needed */
+    padding-right: 30px; /* Space for arrow */
+    background-color: #444; /* Matching input backgrounds */
+    border: 1px solid #555; /* Matching input borders */
+    border-radius: 6px; /* Less rounded than .btn */
+    color: #fff;
+    font-size: 16px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23ccc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 7px center;
+    background-size: 16px;
+    width: 100%; /* Ensure it fills its container */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+}
+
+.select-setting:focus {
+    outline: none;
+    border-color: #999; /* Highlight on focus */
+}
+
 /* New Slider Styles */
 #animation-scrub-slider {
     -webkit-appearance: none; /* Override default appearance */
@@ -1084,68 +1110,115 @@ body {
     display: flex;
     flex-direction: column;
     text-align: left; /* Adjust text alignment for settings content */
+    border-radius: 12px; /* Softer rounded corners */
+    box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.4); /* Subtle shadow for depth */
+    padding: 0; /* Remove default padding, apply to inner sections */
+    overflow: hidden; /* Ensure rounded corners clip content */
 }
 
 #display-settings-modal h2 {
     text-align: center;
     flex-shrink: 0;
-    margin-bottom: 15px;
+    margin: 0 !important; /* Force margin to 0 */
+    padding: 12px 20px; /* Restore vertical padding */
+    border-bottom: 1px solid #3a3a3c; /* Subtle separator */
+    background-color: #242426; /* Slightly different background for header */
 }
 
 #display-settings-modal .modal-buttons {
     flex-shrink: 0; /* Prevent buttons from shrinking */
-    margin-top: 15px; /* Add some space above the buttons */
+    margin-top: 0; /* Adjust margin */
+    padding: 10px 20px 15px; /* Add padding to buttons section */
+    border-top: 1px solid #3a3a3c; /* Subtle separator */
+    background-color: #242426; /* Consistent background with header */
 }
 
 .settings-grid {
     flex-grow: 1; /* Allow the grid to take available space */
     overflow-y: auto; /* Enable vertical scrolling */
-    display: grid;
-    grid-template-columns: 1fr; /* Single column layout for items */
-    gap: 20px;
-    padding: 10px; /* Add some padding inside the scrollable area */
-    margin-bottom: 15px; /* Space between content and buttons */
+    display: flex; /* Change to flex for vertical stacking of groups */
+    flex-direction: column;
+    gap: 15px; /* Space between settings groups */
+    margin: 0; /* Ensure no external margin */
+    padding: 0 20px 15px; /* No top padding, with side and bottom padding */
+}
+
+/* Custom Scrollbar for Settings Grid (macOS-like subtle scrollbar) */
+#display-settings-modal .settings-grid::-webkit-scrollbar {
+    width: 8px; /* Width of the vertical scrollbar */
+    background-color: transparent; /* Make the scrollbar area transparent */
+}
+
+#display-settings-modal .settings-grid::-webkit-scrollbar-track {
+    background: transparent; /* No visible track background */
+}
+
+#display-settings-modal .settings-grid::-webkit-scrollbar-thumb {
+    background-color: #666; /* Dark gray thumb */
+    border-radius: 10px; /* Rounded thumb */
+    border: 2px solid transparent; /* Subtle border that blends with track */
+    background-clip: padding-box; /* Ensures border doesn't create sharp edges */
+}
+
+#display-settings-modal .settings-grid::-webkit-scrollbar-thumb:hover {
+    background-color: #888; /* Lighter on hover */
 }
 
 .settings-group {
-    border: 1px solid #444;
+    border: none; /* Remove border, use background for separation */
     border-radius: 8px;
     padding: 15px;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    background-color: #363638; /* Slightly darker background for groups */
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Subtle inner shadow */
 }
 
 .settings-group h3 {
     margin-top: 0;
-    margin-bottom: 10px;
+    margin-bottom: 5px; /* Reduce margin */
     font-size: 18px;
     color: #ccc;
-    border-bottom: 1px solid #555;
+    border-bottom: 1px solid #4a4a4c; /* Lighter separator */
     padding-bottom: 5px;
 }
 
 .settings-item {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-start; /* Align items to start */
     align-items: center;
+    gap: 15px; /* Spacing between label and input/select */
+    padding: 8px 0; /* Add vertical padding for items */
+    transition: background-color 0.2s ease; /* Smooth hover transition */
+}
+
+.settings-item:hover {
+    background-color: rgba(255, 255, 255, 0.05); /* Subtle hover effect */
+    border-radius: 4px; /* Slightly rounded hover background */
 }
 
 .settings-item label {
-    flex-shrink: 0;
-    margin-right: 15px;
+    flex-shrink: 0; /* Prevent labels from shrinking */
+    min-width: 120px; /* Give labels a consistent minimum width */
+    margin-right: 0; /* Remove default margin */
+    font-size: 15px;
+    color: #e0e0e0;
 }
 
 .settings-item .btn,
-.settings-item input[type="number"] {
+.settings-item input[type="number"],
+.select-setting { /* Apply to both number inputs and select-setting */
     flex-grow: 1; /* Allow inputs/selects to take available space */
-    max-width: 150px; /* Limit their max width */
-    text-align: center;
+    height: 38px; /* Standardize height */
+    padding: 0 10px; /* Adjust padding */
+    border-radius: 8px; /* Consistent rounded corners */
     background-color: #444;
     border-color: #555;
     color: #fff;
-    padding: 8px 12px;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.3); /* Subtle inner shadow for depth */
 }
+
 
 /* --- Record Page Redesign --- */
 .flex-grow {
@@ -1194,7 +1267,7 @@ body {
 
 .progress-bar-wrapper {
     display: flex;
-    align-items: center;
+    align-items: end;
     justify-content: center;
     gap: 8px;
 }

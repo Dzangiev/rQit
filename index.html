@@ -266,6 +266,26 @@
     <script type="module" src="record.js"></script>
     <script type="module" src="mediabunny.mjs"></script>
 
+    <div id="edit-timestamp-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <p>Редактировать/Удалить тайм-код</p>
+            <div class="manual-add-inputs">
+                <input type="number" id="edit-h" min="0" max="99" placeholder="HH">
+                <span>:</span>
+                <input type="number" id="edit-m" min="0" max="59" placeholder="MM">
+                <span>:</span>
+                <input type="number" id="edit-s" min="0" max="59" placeholder="SS">
+                <span>.</span>
+                <input type="number" id="edit-cs" min="0" max="99" placeholder="CS">
+            </div>
+            <div class="modal-buttons">
+                <button id="edit-timestamp-save-btn" class="btn">Сохранить</button>
+                <button id="edit-timestamp-delete-btn" class="btn btn--destructive">Удалить</button>
+                <button id="edit-timestamp-cancel-btn" class="btn">Отмена</button>
+            </div>
+        </div>
+    </div>
+
     <div id="confirmation-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <p id="confirmation-message"></p>
@@ -280,8 +300,7 @@
         <div class="modal-content">
             <h2>Метод записи</h2>
             <div class="settings-item" style="padding: 10px 0;">
-                <label for="record-mode-select">Метод записи</label>
-                <select id="record-mode-select" class="btn">
+                <select id="record-mode-select" class="select-setting">
                     <option value="fast">Быстрый (ПК)</option>
                     <option value="compatible">Совместимый (мобильные)</option>
                 </select>
