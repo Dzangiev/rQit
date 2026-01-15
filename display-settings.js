@@ -117,6 +117,7 @@ window.DisplaySettings = {
             const dpr = (canvas.parentElement.id === 'hidden-canvas-container') ? 1 : (window.devicePixelRatio || 1);
             const canvasHeight = canvas.height / dpr;
             const canvasWidth = canvas.width / dpr;
+            const padding = localSettings.canvasPadding; // Get padding setting
 
             ctx.fillStyle = '#000';
             ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -126,8 +127,10 @@ window.DisplaySettings = {
             ctx.textAlign = 'center';
             const baseFillStyle = `rgba(255, 255, 255, ${opacity})`;
 
-            const primaryLines = wrapText(primaryText, canvasWidth * 0.9, localSettings.primaryFontSize, localSettings.primaryFont);
-            const secondaryLines = wrapText(secondaryText, canvasWidth * 0.9, localSettings.secondaryFontSize, localSettings.secondaryFont);
+            const textMaxWidth = canvasWidth - (padding * 2); // Available width for text
+            
+            const primaryLines = wrapText(primaryText, textMaxWidth, localSettings.primaryFontSize, localSettings.primaryFont);
+            const secondaryLines = wrapText(secondaryText, textMaxWidth, localSettings.secondaryFontSize, localSettings.secondaryFont);
 
             const primaryLineHeight = localSettings.primaryFontSize * 1.2;
             const secondaryLineHeight = localSettings.secondaryFontSize * 1.2;
@@ -138,7 +141,10 @@ window.DisplaySettings = {
             const spacing = (primaryLines.length > 0 && secondaryLines.length > 0) ? localSettings.textSpacing : 0;
 
             const totalHeight = primaryBlockHeight + secondaryBlockHeight + spacing;
-            let startY = (canvasHeight - totalHeight) / 2;
+            
+            const availableVerticalSpace = canvasHeight - (padding * 2);
+            let startY = (availableVerticalSpace - totalHeight) / 2 + padding; // Adjusted startY for vertical centering with padding
+
 
             ctx.textBaseline = 'top';
             
