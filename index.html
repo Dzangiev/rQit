@@ -40,7 +40,10 @@
                                         <span class="icon icon-gauge"></span>
                                         <span id="speed-text">1.0x</span>
                                     </button>
-                                    <span id="time-display" class="time-display"><div>00:00:00.0</div><div style="color: #777;">/</div><div style="color: #777;">00:00:00.0</div></span>
+                                    <div id="time-display" class="time-display-stack">
+                                        <div id="time-display-current">00:00:00.00</div>
+                                        <div id="time-display-duration" style="color: #777;">00:00:00.00</div>
+                                    </div>
                                     <button id="play-pause-btn" class="btn btn--small">
                                         <span class="icon icon-play"></span>
                                     </button>
@@ -116,7 +119,7 @@
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">00:00:06.5</div></div></td>
+                                        <td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">00:00:06.50</div></div></td>
                                         <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div></div></td>
                                         <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">In the name of God, the Lord of Mercy, the Giver of Mercy!</div></div></td>
                                     </tr>
@@ -160,7 +163,10 @@
                     <div class="display-controls-area"> <!-- Container for all controls below canvas -->
                         <div class="display-top-row-controls">
                             <button id="display-settings-btn" class="btn btn--small"><span class="icon icon-gear"></span></button>
-                            <span id="display-time" class="time-display"><div>00:00:00.0</div><div style="color: #777;">/</div><div style="color: #777;">00:00:00.0</div></span>
+                            <div id="display-time" class="time-display-stack">
+                                <div>00:00:00.00</div>
+                                <div style="color: #777;">00:00:00.00</div>
+                            </div>
                         </div>
                         <div class="display-bottom-row-controls">
                             <div class="version-select-container">
@@ -292,7 +298,7 @@
                 <span>:</span>
                 <input type="number" id="manual-s" min="0" max="59" placeholder="SS">
                 <span>.</span>
-                <input type="number" id="manual-ds" min="0" max="9" placeholder="D">
+                <input type="number" id="manual-cs" min="0" max="99" placeholder="CS">
             </div>
             <div class="modal-buttons">
                 <button id="manual-add-save-btn" class="btn">Сохранить</button>

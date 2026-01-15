@@ -6,7 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const textDisplay = document.getElementById('text-display');
     const playPauseBtn = document.getElementById('play-pause-btn');
     const playPauseIcon = playPauseBtn.querySelector('.icon');
-    const timeDisplay = document.getElementById('time-display');
+    const timeDisplayCurrent = document.getElementById('time-display-current');
+    const timeDisplayDuration = document.getElementById('time-display-duration');
     const zoomInBtn = document.getElementById('zoom-in-btn');
     const zoomOutBtn = document.getElementById('zoom-out-btn');
     const speedBtn = document.getElementById('speed-btn');
@@ -175,21 +176,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Time Display ---
     function formatTime(seconds) {
-        if (isNaN(seconds)) return '00:00:00.0';
+        if (isNaN(seconds)) return '00:00:00.00';
         const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
         const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
         const s = Math.floor(seconds % 60).toString().padStart(2, '0');
-        const ds = Math.floor((seconds - Math.floor(seconds)) * 10).toString();
-        return `${h}:${m}:${s}.${ds}`;
+        const cs = Math.floor((seconds - Math.floor(seconds)) * 100).toString().padStart(2, '0');
+        return `${h}:${m}:${s}.${cs}`;
     }
 
     function updateTimeDisplay() {
         const currentTime = videoPlayer.currentTime;
         const duration = videoPlayer.duration;
         if (!isNaN(duration)) {
-             timeDisplay.innerHTML = `<div>${formatTime(currentTime)}</div><div style="color: #777;">/</div><div style="color: #777;">${formatTime(duration)}</div>`;
+            timeDisplayCurrent.textContent = formatTime(currentTime);
+            timeDisplayDuration.textContent = formatTime(duration);
         } else {
-            timeDisplay.innerHTML = `<div>00:00:00.0</div><div style="color: #777;">/</div><div style="color: #777;">00:00:00.0</div>`;
+            timeDisplayCurrent.textContent = '00:00:00.00';
+            timeDisplayDuration.textContent = '00:00:00.00';
         }
     }
 

@@ -321,17 +321,17 @@ async function init() {
         const drawText = window.DisplaySettings.createDrawTextFunction(canvas, ctx);
 
         const formatTime = (seconds) => {
-            if (isNaN(seconds) || seconds < 0) return '00:00:00.0';
+            if (isNaN(seconds) || seconds < 0) return '00:00:00.00';
             const h = Math.floor(seconds / 3600);
             const m = Math.floor((seconds % 3600) / 60);
             const s = Math.floor(seconds % 60);
-            const ds = Math.floor((seconds - Math.floor(seconds)) * 10);
-            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ds}`;
+            const cs = Math.floor((seconds - Math.floor(seconds)) * 100).toString().padStart(2, '0');
+            return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${cs}`;
         };
 
         const updateTotalTime = () => {
             const durationFormatted = formatTime(duration);
-            timeDisplay.children[2].textContent = durationFormatted;
+            timeDisplay.children[1].textContent = durationFormatted;
         };
 
         const updateCurrentTime = () => {

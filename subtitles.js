@@ -10,9 +10,9 @@ window.Subtitles = (() => {
         const h = parseInt(parts[0], 10);
         const m = parseInt(parts[1], 10);
         const s = parseInt(parts[2], 10);
-        const ds = parseInt(parts[3], 10);
-        if (isNaN(h) || isNaN(m) || isNaN(s) || isNaN(ds)) return null;
-        return h * 3600 + m * 60 + s + ds / 10;
+        const cs = parseInt(parts[3], 10);
+        if (isNaN(h) || isNaN(m) || isNaN(s) || isNaN(cs)) return null;
+        return h * 3600 + m * 60 + s + cs / 100;
     };
 
     const parseTable = () => {

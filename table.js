@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const manualInputH = document.getElementById('manual-h');
     const manualInputM = document.getElementById('manual-m');
     const manualInputS = document.getElementById('manual-s');
-    const manualInputDS = document.getElementById('manual-ds');
+    const manualInputCS = document.getElementById('manual-cs');
     const manualAddSaveBtn = document.getElementById('manual-add-save-btn');
     const manualAddCancelBtn = document.getElementById('manual-add-cancel-btn');
 
@@ -68,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
         manualInputH.value = '';
         manualInputM.value = '';
         manualInputS.value = '';
-        manualInputDS.value = '';
+        manualInputCS.value = '';
         manualAddModal.classList.remove('hidden');
     };
 
@@ -143,14 +143,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const h = parseInt(manualInputH.value || 0, 10);
         const m = parseInt(manualInputM.value || 0, 10);
         const s = parseInt(manualInputS.value || 0, 10);
-        const ds = parseInt(manualInputDS.value || 0, 10);
+        const cs = parseInt(manualInputCS.value || 0, 10);
 
-        if (h > 99 || m > 59 || s > 59 || ds > 9 || h < 0 || m < 0 || s < 0 || ds < 0) {
+        if (h > 99 || m > 59 || s > 59 || cs > 99 || h < 0 || m < 0 || s < 0 || cs < 0) {
             alert('Неверный формат времени.');
             return;
         }
 
-        const timeInSeconds = h * 3600 + m * 60 + s + ds / 10;
+        const timeInSeconds = h * 3600 + m * 60 + s + cs / 100;
         insertTimestampRow(timeInSeconds);
         hideManualAddModal();
     });
@@ -476,12 +476,12 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const formatTime = (seconds) => {
-        if (isNaN(seconds)) return '00:00:00.0';
+        if (isNaN(seconds)) return '00:00:00.00';
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = Math.floor(seconds % 60);
-        const ds = Math.floor((seconds - Math.floor(seconds)) * 10);
-        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${ds}`;
+        const cs = Math.floor((seconds - Math.floor(seconds)) * 100);
+        return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${cs.toString().padStart(2, '0')}`;
     };
 
     const insertTimestampRow = (time) => {

@@ -1,4 +1,9 @@
 @font-face {
+    font-family: 'Aseret Mono';
+    src: url('Fonts/AzeretMono-VariableFont_wght.ttf') format('truetype-variations');
+}
+
+@font-face {
     font-family: 'Inter var';
     font-weight: 100 900;
     font-display: swap;
@@ -1198,3 +1203,16 @@ body.is-mobile {
 
 .icon-undo { -webkit-mask-image: url('icons/Undo.svg'); mask-image: url('icons/Undo.svg'); }
 .icon-redo { -webkit-mask-image: url('icons/Redo.svg'); mask-image: url('icons/Redo.svg'); }
+
+.time-display-stack {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 14px;
+    line-height: 1.2;
+    color: #ccc;
+    white-space: nowrap;
+    justify-content: center;
+    text-align: center;
+    font-family: 'Aseret Mono';
+}
