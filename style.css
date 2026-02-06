@@ -32,6 +32,13 @@
     font-style: normal;
 }
 
+@font-face {
+    font-family: 'Uthmanic Hafs v22';
+    src: url('Fonts/UthmanicHafs_V22.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
+
 /* --- Global and Layout --- */
 .hidden {
     display: none;
@@ -660,7 +667,7 @@ body {
 }
 
 #main-table td:nth-child(2) .cell-content {
-    font-family: 'KFGQPC Uthmanic Script HAFS', sans-serif;
+    font-family: 'Uthmanic Hafs v18', 'KFGQPC Uthmanic Script HAFS', sans-serif;
     direction: rtl;
     font-size: 20px;
 }

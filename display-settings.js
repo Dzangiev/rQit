@@ -90,9 +90,13 @@ window.DisplaySettings = {
             }
         };
 
+        const getFontStack = (fontFace) => {
+            return `'${fontFace}', sans-serif`;
+        };
+
         const wrapText = (text, maxWidth, fontSize, fontFace) => {
             if (!text) return [];
-            ctx.font = `${fontSize}px '${fontFace}', sans-serif`;
+            ctx.font = `${fontSize}px ${getFontStack(fontFace)}`;
             const words = text.split(' ');
             let lines = [];
             let currentLine = words[0] || '';
@@ -132,7 +136,7 @@ window.DisplaySettings = {
             const primaryLines = wrapText(primaryText, textMaxWidth, localSettings.primaryFontSize, localSettings.primaryFont);
             const secondaryLines = wrapText(secondaryText, textMaxWidth, localSettings.secondaryFontSize, localSettings.secondaryFont);
 
-            const primaryLineHeight = localSettings.primaryFontSize * 1.2;
+            const primaryLineHeight = localSettings.primaryFontSize * (localSettings.primaryLineHeight || 1.2);
             const secondaryLineHeight = localSettings.secondaryFontSize * 1.2;
 
             const primaryBlockHeight = primaryLines.length * primaryLineHeight;
@@ -147,20 +151,28 @@ window.DisplaySettings = {
 
 
             ctx.textBaseline = 'top';
+            ctx.direction = 'rtl'; // Set RTL for Arabic text
             
             ctx.fillStyle = baseFillStyle;
-            ctx.font = `${localSettings.primaryFontSize}px '${localSettings.primaryFont}', sans-serif`;
+            ctx.font = `${localSettings.primaryFontSize}px ${getFontStack(localSettings.primaryFont)}`;
             primaryLines.forEach((line, index) => {
-                ctx.fillText(line, canvasWidth / 2, startY + index * primaryLineHeight);
+                // Normalize Unicode to NFC for proper combining character rendering
+                const normalizedLine = line.normalize('NFC');
+                ctx.fillText(normalizedLine, canvasWidth / 2, startY + index * primaryLineHeight);
             });
 
             startY += primaryBlockHeight + spacing;
 
+            ctx.direction = 'ltr'; // Reset to LTR for secondary text (usually translation)
             ctx.fillStyle = baseFillStyle;
-            ctx.font = `${localSettings.secondaryFontSize}px '${localSettings.secondaryFont}', sans-serif`;
+            ctx.font = `${localSettings.secondaryFontSize}px ${getFontStack(localSettings.secondaryFont)}`;
             secondaryLines.forEach((line, index) => {
-                ctx.fillText(line, canvasWidth / 2, startY + index * secondaryLineHeight);
+                // Normalize Unicode to NFC for proper combining character rendering
+                const normalizedLine = line.normalize('NFC');
+                ctx.fillText(normalizedLine, canvasWidth / 2, startY + index * secondaryLineHeight);
             });
+            
+            ctx.direction = 'ltr'; // Reset direction
         };
     }
 };

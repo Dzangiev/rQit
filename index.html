@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ru">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="display-settings-modal.css">
 </head>
+
 <body>
     <div class="panels">
         <div id="content">
@@ -29,11 +31,15 @@
                     <div id="player-bottom-section" class="hidden">
                         <!-- Bottom Bar -->
                         <div class="player-bottom-bar" style="height: auto;">
-                            <div class="table-dataset"><p class="text-display" id="text-display">Whereas disregard and contempt for</p></div>
+                            <div class="table-dataset">
+                                <p class="text-display" id="text-display">Whereas disregard and contempt for</p>
+                            </div>
                             <div class="player-controls">
                                 <div class="zoom-controls flex d-row align-center">
-                                    <button id="zoom-out-btn" class="btn btn--small"><span class="icon icon-zoom-minus"></span></button>
-                                    <button id="zoom-in-btn" class="btn btn--small"><span class="icon icon-zoom-plus"></span></button>
+                                    <button id="zoom-out-btn" class="btn btn--small"><span
+                                            class="icon icon-zoom-minus"></span></button>
+                                    <button id="zoom-in-btn" class="btn btn--small"><span
+                                            class="icon icon-zoom-plus"></span></button>
                                 </div>
                                 <div class="flex d-row align-center">
                                     <button id="speed-btn" class="btn btn--small">
@@ -100,33 +106,68 @@
                                         <th>
                                             <div class="header-content">
                                                 Тайм-коды
-                                                <button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button>
+                                                <button class="btn btn--small btn-delete-col"
+                                                    style="visibility: hidden;"><span
+                                                        class="icon icon-x"></span></button>
                                             </div>
                                         </th>
                                         <th>
                                             <div class="header-content">
                                                 <div class="header-text" contenteditable="true">Arabian</div>
-                                                <button class="btn btn--small btn-delete-col" style="visibility: hidden;"><span class="icon icon-x"></span></button>
+                                                <button class="btn btn--small btn-delete-col"
+                                                    style="visibility: hidden;"><span
+                                                        class="icon icon-x"></span></button>
                                             </div>
                                         </th>
                                         <th>
                                             <div class="header-content">
                                                 <div class="header-text" contenteditable="true">English</div>
-                                                <button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button>
+                                                <button class="btn btn--small btn-delete-col"><span
+                                                        class="icon icon-x"></span></button>
                                             </div>
                                         </th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <tr>
-                                        <td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content">00:00:06.50</div></div></td>
-                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيمِ</div></div></td>
-                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">In the name of God, the Lord of Mercy, the Giver of Mercy!</div></div></td>
+                                        <td>
+                                            <div class="cell-content-wrapper"><button
+                                                    class="btn btn--small btn-delete-row"><span
+                                                        class="icon icon-x"></span></button>
+                                                <div class="cell-content">00:00:06.50</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="cell-content-wrapper">
+                                                <div class="cell-content" contenteditable="true">بِسْمِ اللَّهِ
+                                                    الرَّحْمَنِ الرَّحِيمِ</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="cell-content-wrapper">
+                                                <div class="cell-content" contenteditable="true">In the name of God, the
+                                                    Lord of Mercy, the Giver of Mercy!</div>
+                                            </div>
+                                        </td>
                                     </tr>
                                     <tr>
-                                        <td><div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content" contenteditable="true"></div></div></td>
-                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div></td>
-                                        <td><div class="cell-content-wrapper"><div class="cell-content" contenteditable="true"></div></div></td>
+                                        <td>
+                                            <div class="cell-content-wrapper"><button
+                                                    class="btn btn--small btn-delete-row"><span
+                                                        class="icon icon-x"></span></button>
+                                                <div class="cell-content" contenteditable="true"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="cell-content-wrapper">
+                                                <div class="cell-content" contenteditable="true"></div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="cell-content-wrapper">
+                                                <div class="cell-content" contenteditable="true"></div>
+                                            </div>
+                                        </td>
                                     </tr>
                                 </tbody>
                             </table>
@@ -137,8 +178,10 @@
                     <div class="table-bottom-bar">
                         <div class="table-buttons-wrapper">
                             <div class="table-undo-redo-controls">
-                                <button class="btn-table-action btn--table-icon-only" id="btn-undo"><span class="icon icon-undo"></span></button>
-                                <button class="btn-table-action btn--table-icon-only" id="btn-redo"><span class="icon icon-redo"></span></button>
+                                <button class="btn-table-action btn--table-icon-only" id="btn-undo"><span
+                                        class="icon icon-undo"></span></button>
+                                <button class="btn-table-action btn--table-icon-only" id="btn-redo"><span
+                                        class="icon icon-redo"></span></button>
                             </div>
                             <button class="btn-table-action" id="btn-add-manual">Добавить тайм-код</button>
                             <button class="btn-table-action" id="btn-add-language">Добавить язык</button>
@@ -147,6 +190,8 @@
                             <button class="btn-table-action" id="btn-split-text" disabled>Разделить</button>
                             <button class="btn-table-action" id="btn-add-from-quran">Добавить из Корана</button>
                             <button class="btn-table-action" id="btn-export-table">Экспорт таблицы</button>
+                            <button class="btn-table-action" id="btn-export-json">Экспорт JSON</button>
+                            <button class="btn-table-action" id="btn-export-capcut">Экспорт для CapCut</button>
                             <label for="import-table-input" class="btn-table-action">Импорт таблицы</label>
                             <input type="file" id="import-table-input" accept=".csv" hidden>
                         </div>
@@ -156,7 +201,7 @@
             <div class="page" id="page-display-settings">
                 <div class="display-settings-container">
                     <div class="page-title">Настройка отображения</div>
-                
+
                     <div class="canvas-container">
                         <canvas id="display-canvas"></canvas>
                     </div>
@@ -164,7 +209,8 @@
                     <div class="display-controls-area"> <!-- Container for all controls below canvas -->
                         <div class="display-top-row-controls">
                             <div class="display-settings-left-group">
-                                <button id="display-settings-btn" class="btn btn--small"><span class="icon icon-gear"></span></button>
+                                <button id="display-settings-btn" class="btn btn--small"><span
+                                        class="icon icon-gear"></span></button>
                                 <div class="version-select-container">
                                     <select id="version-select" class="btn btn--nobg">
                                         <option value="default">Дефолтная версия</option>
@@ -177,11 +223,15 @@
                             </div>
                         </div>
                         <div class="display-bottom-row-controls">
-                            <input type="range" id="animation-scrub-slider" min="0" max="100" value="0" step="0.01" class="slider">
+                            <input type="range" id="animation-scrub-slider" min="0" max="100" value="0" step="0.01"
+                                class="slider">
                             <div class="display-buttons-right">
-                                <button id="display-prev-btn" class="btn btn--small"><span class="icon icon-skip-back"></span></button>
-                                <button id="display-play-pause-btn" class="btn btn--small"><span class="icon icon-play"></span></button>
-                                <button id="display-next-btn" class="btn btn--small"><span class="icon icon-skip-forward"></span></button>
+                                <button id="display-prev-btn" class="btn btn--small"><span
+                                        class="icon icon-skip-back"></span></button>
+                                <button id="display-play-pause-btn" class="btn btn--small"><span
+                                        class="icon icon-play"></span></button>
+                                <button id="display-next-btn" class="btn btn--small"><span
+                                        class="icon icon-skip-forward"></span></button>
                             </div>
                         </div>
                     </div>
@@ -196,7 +246,7 @@
                         <h2>Запись</h2>
                         <div class="record-block-controls">
                             <button id="open-versions-modal-btn" class="btn btn--full-width">Выбрать версии</button>
-                             <button id="open-record-mode-btn" class="btn btn--small">
+                            <button id="open-record-mode-btn" class="btn btn--small">
                                 <span class="icon icon-gear"></span>
                             </button>
                             <button id="record-start-btn" class="btn btn--primary-action btn--small">
@@ -334,13 +384,25 @@
         <div class="modal-content">
             <p>Добавить из Корана</p>
             <div class="quran-import-inputs">
-                <input type="number" id="quran-surah" placeholder="Сура">
+                <select id="quran-surah-select" style="flex: 2;">
+                    <option value="" disabled selected>Выберите суру</option>
+                </select>
+                <select id="quran-reciter-select" style="flex: 2;">
+                    <option value="" selected>Без чтеца (только текст)</option>
+                </select>
+                <select id="quran-script-select" style="flex: 2;">
+                    <option value="text_uthmani">Uthmanic</option>
+                    <option value="text_uthmani_simple">Uthmanic Simple</option>
+                    <option value="text_imlaei" selected>Imlaei (Default)</option>
+                    <option value="text_indopak">Indopak</option>
+                </select>
                 <input type="number" id="quran-ayah-start" placeholder="Аят (начало)">
                 <input type="number" id="quran-ayah-end" placeholder="Аят (конец)">
             </div>
-            
+
             <div class="collapsible-container" style="margin-top: 15px;">
-                <button type="button" id="quran-lang-collapsible-trigger" class="btn btn--full-width">Выбрать языки</button>
+                <button type="button" id="quran-lang-collapsible-trigger" class="btn btn--full-width">Выбрать
+                    языки</button>
                 <div class="collapsible-content hidden" id="quran-lang-list-container">
                     <!-- Checkboxes will be populated by JS -->
                 </div>
@@ -353,7 +415,7 @@
         </div>
     </div>
 
-<div id="display-settings-modal" class="modal-overlay hidden">
+    <div id="display-settings-modal" class="modal-overlay hidden">
         <div class="modal-content">
             <h2>Настройки отображения</h2>
             <div class="settings-grid">
@@ -397,5 +459,21 @@
             </div>
         </div>
     </div>
+
+    <div id="capcut-export-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2>Экспорт для CapCut</h2>
+            <p style="font-size: 0.9em; color: #888; margin-bottom: 15px;">Выберите позицию текста для каждого столбца
+            </p>
+            <div id="capcut-columns-list" class="scrollable-list" style="max-height: 300px;">
+                <!-- Колонки будут добавлены через JS -->
+            </div>
+            <div class="modal-buttons">
+                <button id="capcut-export-confirm-btn" class="btn">Экспортировать</button>
+                <button id="capcut-export-cancel-btn" class="btn">Отмена</button>
+            </div>
+        </div>
+    </div>
 </body>
+
 </html>

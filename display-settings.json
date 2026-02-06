@@ -8,11 +8,26 @@
                     "label": "Соотношение сторон",
                     "type": "select",
                     "options": [
-                        { "value": "9:16", "label": "9:16" },
-                        { "value": "16:9", "label": "16:9" },
-                        { "value": "1:1", "label": "1:1" },
-                        { "value": "3:4", "label": "3:4" },
-                        { "value": "4:3", "label": "4:3" }
+                        {
+                            "value": "9:16",
+                            "label": "9:16"
+                        },
+                        {
+                            "value": "16:9",
+                            "label": "16:9"
+                        },
+                        {
+                            "value": "1:1",
+                            "label": "1:1"
+                        },
+                        {
+                            "value": "3:4",
+                            "label": "3:4"
+                        },
+                        {
+                            "value": "4:3",
+                            "label": "4:3"
+                        }
                     ],
                     "default": "9:16"
                 },
@@ -21,10 +36,22 @@
                     "label": "Разрешение",
                     "type": "select",
                     "options": [
-                        { "value": 1080, "label": "1080p" },
-                        { "value": 720, "label": "720p" },
-                        { "value": 480, "label": "480p" },
-                        { "value": 360, "label": "360p" }
+                        {
+                            "value": 1080,
+                            "label": "1080p"
+                        },
+                        {
+                            "value": 720,
+                            "label": "720p"
+                        },
+                        {
+                            "value": 480,
+                            "label": "480p"
+                        },
+                        {
+                            "value": 360,
+                            "label": "360p"
+                        }
                     ],
                     "default": 1080
                 }
@@ -39,10 +66,20 @@
                     "label": "Шрифт",
                     "type": "select",
                     "options": [
-                        { "value": "KFGQPC Uthmanic Script HAFS", "label": "KFGQPC" },
-                        { "value": "Inter var", "label": "Inter" }
+                        {
+                            "value": "KFGQPC Uthmanic Script HAFS",
+                            "label": "KFGQPC"
+                        },
+                        {
+                            "value": "Inter var",
+                            "label": "Inter"
+                        },
+                        {
+                            "value": "Uthmanic Hafs v22",
+                            "label": "Uthmanic v22"
+                        }
                     ],
-                    "default": "KFGQPC Uthmanic Script HAFS"
+                    "default": "Uthmanic Hafs v22"
                 },
                 {
                     "id": "primaryFontSize",
@@ -51,6 +88,14 @@
                     "default": 67,
                     "min": 1,
                     "step": 1
+                },
+                {
+                    "id": "primaryLineHeight",
+                    "label": "Межстрочный интервал",
+                    "type": "number",
+                    "default": 1.5,
+                    "min": 0.5,
+                    "step": 0.1
                 }
             ]
         },
@@ -63,8 +108,18 @@
                     "label": "Шрифт",
                     "type": "select",
                     "options": [
-                        { "value": "Inter var", "label": "Inter" },
-                        { "value": "KFGQPC Uthmanic Script HAFS", "label": "KFGQPC" }
+                        {
+                            "value": "Inter var",
+                            "label": "Inter"
+                        },
+                        {
+                            "value": "KFGQPC Uthmanic Script HAFS",
+                            "label": "KFGQPC"
+                        },
+                        {
+                            "value": "Uthmanic Hafs v22",
+                            "label": "Uthmanic v22"
+                        }
                     ],
                     "default": "Inter var"
                 },
@@ -81,7 +136,7 @@
         {
             "id": "spacingGroup",
             "settings": [
-                 {
+                {
                     "id": "textSpacing",
                     "label": "Расстояние между текстами",
                     "type": "number",
@@ -108,8 +163,14 @@
                     "label": "Тип",
                     "type": "select",
                     "options": [
-                        { "value": "fade", "label": "Появление/Исчезновение" },
-                        { "value": "none", "label": "Без анимации" }
+                        {
+                            "value": "fade",
+                            "label": "Появление/Исчезновение"
+                        },
+                        {
+                            "value": "none",
+                            "label": "Без анимации"
+                        }
                     ],
                     "default": "fade"
                 },
@@ -125,12 +186,27 @@
                     "id": "animationEasing",
                     "label": "Плавность",
                     "type": "select",
-                    "condition": { "id": "animationType", "value": "fade" },
+                    "condition": {
+                        "id": "animationType",
+                        "value": "fade"
+                    },
                     "options": [
-                        { "value": "linear", "label": "Линейная" },
-                        { "value": "easeInQuad", "label": "Ease-In" },
-                        { "value": "easeOutQuad", "label": "Ease-Out" },
-                        { "value": "easeInOutQuad", "label": "Ease-In-Out" }
+                        {
+                            "value": "linear",
+                            "label": "Линейная"
+                        },
+                        {
+                            "value": "easeInQuad",
+                            "label": "Ease-In"
+                        },
+                        {
+                            "value": "easeOutQuad",
+                            "label": "Ease-Out"
+                        },
+                        {
+                            "value": "easeInOutQuad",
+                            "label": "Ease-In-Out"
+                        }
                     ],
                     "default": "linear"
                 }

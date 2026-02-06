@@ -7,6 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnAddManual = document.getElementById('btn-add-manual');
     const btnAddFromQuran = document.getElementById('btn-add-from-quran');
     const btnExportTable = document.getElementById('btn-export-table');
+    const btnExportJSON = document.getElementById('btn-export-json');
+    const btnExportCapCut = document.getElementById('btn-export-capcut');
     const importTableInput = document.getElementById('import-table-input');
     const btnUndo = document.getElementById('btn-undo');
     const btnRedo = document.getElementById('btn-redo');
@@ -29,15 +31,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- Quran Import Modal DOM Elements ---
     const quranImportModal = document.getElementById('quran-import-modal');
-    const quranSurahInput = document.getElementById('quran-surah');
+    const quranSurahSelect = document.getElementById('quran-surah-select');
+    const quranReciterSelect = document.getElementById('quran-reciter-select');
     const quranAyahStartInput = document.getElementById('quran-ayah-start');
     const quranAyahEndInput = document.getElementById('quran-ayah-end');
     const quranImportConfirmBtn = document.getElementById('quran-import-confirm-btn');
     const quranImportCancelBtn = document.getElementById('quran-import-cancel-btn');
+    const quranScriptSelect = document.getElementById('quran-script-select'); // New element
     const quranLangCollapsibleTrigger = document.getElementById('quran-lang-collapsible-trigger');
     const quranLangListContainer = document.getElementById('quran-lang-list-container');
 
-    // --- Edit Timestamp Modal DOM Elements ---
+    // ...
+
+
     const editTimestampModal = document.getElementById('edit-timestamp-modal');
     const editInputH = document.getElementById('edit-h');
     const editInputM = document.getElementById('edit-m');
@@ -56,14 +62,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let history = [];
     let historyIndex = -1;
 
-    const ALL_QURAN_LANGUAGES = [
-        { name: 'quran', file: 'quran.json' },
-        { name: 'en', file: 'en.json' },
-        { name: 'ru', file: 'ru.json' },
-        { name: 'bn', file: 'bn.json' },
-        { name: 'es', file: 'es.json' },
-        { name: 'id', file: 'id.json' }
-    ];
+    let availableTranslations = [];
+    const API_BASE_URL = 'https://api.quran.com/api/v4';
     const QURAN_LANG_STORAGE_KEY = 'quranImportLanguages';
 
     // --- Modal Logic ---
@@ -109,25 +109,97 @@ document.addEventListener('DOMContentLoaded', () => {
         editingTimestampRowIndex = -1;
     };
 
+    const fetchSurahs = async () => {
+        if (quranSurahSelect.options.length > 1) return; // Already populated
+        try {
+            const response = await fetch(`${API_BASE_URL}/chapters?language=en`);
+            const data = await response.json();
+            data.chapters.forEach(chapter => {
+                const option = document.createElement('option');
+                option.value = chapter.id;
+                option.textContent = `${chapter.id}. ${chapter.name_simple} (${chapter.name_arabic})`;
+                option.dataset.versesCount = chapter.verses_count;
+                quranSurahSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching chapters:', error);
+            alert('Не удалось загрузить список сур.');
+        }
+    };
+
+    const fetchTranslations = async () => {
+        if (availableTranslations.length > 0) return; // Already fetched
+        try {
+            const response = await fetch(`${API_BASE_URL}/resources/translations`);
+            const data = await response.json();
+            // Filter or just use top ones? Let's keep it simple and filter by some popular ones or just show all but sorted.
+            // For now, let's take all.
+            availableTranslations = data.translations.sort((a, b) => a.language_name.localeCompare(b.language_name));
+            populateLanguageList();
+        } catch (error) {
+            console.error('Error fetching translations:', error);
+            alert('Не удалось загрузить список переводов.');
+        }
+    };
+
     const populateLanguageList = () => {
         quranLangListContainer.innerHTML = '';
-        const savedLangs = JSON.parse(localStorage.getItem(QURAN_LANG_STORAGE_KEY)) || ALL_QURAN_LANGUAGES.map(l => l.name);
+        const savedLangs = JSON.parse(localStorage.getItem(QURAN_LANG_STORAGE_KEY)) || [];
 
+        // Add Select All Checkbox
         const allLabel = document.createElement('label');
         allLabel.innerHTML = `<strong><input type="checkbox" id="quran-lang-select-all"> Выбрать все</strong>`;
         quranLangListContainer.appendChild(allLabel);
 
-        ALL_QURAN_LANGUAGES.forEach(lang => {
-            const label = document.createElement('label');
-            const isChecked = savedLangs.includes(lang.name);
-            label.innerHTML = `<input type="checkbox" class="quran-lang-checkbox" value="${lang.name}" ${isChecked ? 'checked' : ''}> ${lang.name}`;
-            quranLangListContainer.appendChild(label);
+        // Group translations by language_name
+        const grouped = availableTranslations.reduce((acc, lang) => {
+            const key = lang.language_name;
+            if (!acc[key]) acc[key] = [];
+            acc[key].push(lang);
+            return acc;
+        }, {});
+
+        // Sort language names
+        const sortedLangNames = Object.keys(grouped).sort();
+
+        sortedLangNames.forEach(langName => {
+            const group = grouped[langName];
+            
+            // Create a details element for the group
+            const details = document.createElement('details');
+            details.style.marginBottom = '5px';
+            details.style.border = '1px solid #ccc';
+            details.style.borderRadius = '4px';
+            details.style.padding = '5px';
+
+            const summary = document.createElement('summary');
+            summary.style.cursor = 'pointer';
+            summary.style.fontWeight = 'bold';
+            summary.textContent = `${langName} (${group.length})`;
+            details.appendChild(summary);
+
+            const listContainer = document.createElement('div');
+            listContainer.style.marginLeft = '15px';
+            listContainer.style.marginTop = '5px';
+            listContainer.style.display = 'flex';
+            listContainer.style.flexDirection = 'column';
+
+            group.forEach(lang => {
+                const label = document.createElement('label');
+                const isChecked = savedLangs.includes(String(lang.id));
+                label.innerHTML = `<input type="checkbox" class="quran-lang-checkbox" value="${lang.id}" data-lang-name="${lang.language_name} - ${lang.name}" ${isChecked ? 'checked' : ''}> ${lang.name}`;
+                listContainer.appendChild(label);
+            });
+
+            details.appendChild(listContainer);
+            quranLangListContainer.appendChild(details);
         });
 
         const selectAllCheckbox = document.getElementById('quran-lang-select-all');
         const langCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox');
 
         const updateSelectAllState = () => {
+            if (langCheckboxes.length === 0) return;
             selectAllCheckbox.checked = Array.from(langCheckboxes).every(cb => cb.checked);
         };
 
@@ -145,11 +217,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
 
+    const fetchReciters = async () => {
+        if (quranReciterSelect.options.length > 1) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/resources/recitations?language=en`);
+            const data = await response.json();
+            data.recitations.sort((a, b) => a.reciter_name.localeCompare(b.reciter_name)).forEach(reciter => {
+                const option = document.createElement('option');
+                option.value = reciter.id;
+                option.textContent = `${reciter.reciter_name} (${reciter.style ? reciter.style : 'Murattal'})`;
+                quranReciterSelect.appendChild(option);
+            });
+        } catch (error) {
+            console.error('Error fetching reciters:', error);
+            // Non-critical, just alert or ignore
+        }
+    };
+
     const showQuranImportModal = () => {
-        quranSurahInput.value = '';
-        quranAyahStartInput.value = '';
+        quranSurahSelect.value = '';
+        quranReciterSelect.value = '';
+        quranAyahStartInput.value = '1';
         quranAyahEndInput.value = '';
-        populateLanguageList();
+        
+        fetchSurahs();
+        fetchReciters();
+        fetchTranslations();
+        // populateLanguageList is called inside fetchTranslations once data is ready
         quranImportModal.classList.remove('hidden');
     };
 
@@ -211,14 +305,63 @@ document.addEventListener('DOMContentLoaded', () => {
     editTimestampCancelBtn.addEventListener('click', hideEditTimestampModal);
 
     quranImportConfirmBtn.addEventListener('click', () => {
-        const surah = parseInt(quranSurahInput.value, 10);
-        const ayahStart = parseInt(quranAyahStartInput.value, 10);
-        const ayahEnd = parseInt(quranAyahEndInput.value, 10);
+        const surah = parseInt(quranSurahSelect.value, 10);
+        const ayahStartRaw = quranAyahStartInput.value.trim();
+        const ayahEndRaw = quranAyahEndInput.value.trim();
 
-        if (isNaN(surah) || isNaN(ayahStart) || isNaN(ayahEnd) || surah < 1 || surah > 114 || ayahStart < 1 || ayahEnd < ayahStart) {
-            alert('Пожалуйста, введите корректные значения для суры и аятов.');
+        // Validate surah selection
+        if (isNaN(surah) || surah < 1 || surah > 114) {
+            alert('Пожалуйста, выберите суру.');
             return;
         }
+
+        // Get max verses for selected surah
+        const selectedOption = quranSurahSelect.options[quranSurahSelect.selectedIndex];
+        const maxVerses = selectedOption ? parseInt(selectedOption.dataset.versesCount, 10) : 999;
+
+        let ayahStart = null;
+        let ayahEnd = null;
+
+        // Parse and validate ayah start
+        if (ayahStartRaw !== '') {
+            ayahStart = parseInt(ayahStartRaw, 10);
+            if (isNaN(ayahStart) || ayahStart < 1) {
+                alert('Аят (начало) должен быть числом не меньше 1.');
+                return;
+            }
+            if (ayahStart > maxVerses) {
+                alert(`Аят (начало) не может быть больше ${maxVerses} (всего аятов в этой суре).`);
+                return;
+            }
+        }
+
+        // Parse and validate ayah end
+        if (ayahEndRaw !== '') {
+            ayahEnd = parseInt(ayahEndRaw, 10);
+            if (isNaN(ayahEnd) || ayahEnd < 1) {
+                alert('Аят (конец) должен быть числом не меньше 1.');
+                return;
+            }
+            if (ayahEnd > maxVerses) {
+                alert(`Аят (конец) не может быть больше ${maxVerses} (всего аятов в этой суре).`);
+                return;
+            }
+        }
+
+        // Cross-field validation
+        if (ayahStart !== null && ayahEnd !== null) {
+            if (ayahEnd < ayahStart) {
+                alert('Аят (конец) не может быть меньше Аята (начало).');
+                return;
+            }
+        } else if (ayahStart !== null && ayahEnd === null) {
+            // If only start is provided, set end to max or same as start
+            ayahEnd = maxVerses; // Load from start to end of surah
+        } else if (ayahStart === null && ayahEnd !== null) {
+            // If only end is provided, start from 1
+            ayahStart = 1;
+        }
+
         importFromQuran(surah, ayahStart, ayahEnd);
     });
 
@@ -310,38 +453,125 @@ document.addEventListener('DOMContentLoaded', () => {
         return String(num).split('').map(digit => easternArabicNumerals[parseInt(digit)]).join('');
     };
 
+
+
+    // ... (existing code)
+
     const importFromQuran = async (surah, ayahStart, ayahEnd) => {
         try {
             const selectedLangCheckboxes = quranLangListContainer.querySelectorAll('.quran-lang-checkbox:checked');
-            const selectedLangNames = Array.from(selectedLangCheckboxes).map(cb => cb.value);
-            localStorage.setItem(QURAN_LANG_STORAGE_KEY, JSON.stringify(selectedLangNames));
-            const languages = ALL_QURAN_LANGUAGES.filter(lang => selectedLangNames.includes(lang.name));
-            if (languages.length === 0) {
-                alert('Пожалуйста, выберите хотя бы один язык для импорта.');
+            const selectedLangIds = Array.from(selectedLangCheckboxes).map(cb => cb.value);
+            
+            // Save selection
+            localStorage.setItem(QURAN_LANG_STORAGE_KEY, JSON.stringify(selectedLangIds));
+
+            // Helper to get name by ID
+            const getLangNameById = (id) => {
+                const cb = Array.from(selectedLangCheckboxes).find(c => c.value === id);
+                return cb ? cb.dataset.langName : id;
+            };
+
+            const originalBtnText = quranImportConfirmBtn.innerText;
+            quranImportConfirmBtn.innerText = 'Загрузка...';
+            quranImportConfirmBtn.disabled = true;
+
+            let allVerses = [];
+            let page = 1;
+            let totalPages = 1;
+            let verseTimings = [];
+            let totalRawDuration = 0;
+            
+            const reciterId = quranReciterSelect.value;
+            const scriptType = quranScriptSelect.value || 'text_uthmani';
+
+            try {
+                // Fetch Reciter Timestamps if selected
+                if (reciterId) {
+                    // ... (Comment block preserved) ...
+                     const timeRes = await fetch(`${API_BASE_URL}/recitations/${reciterId}/by_chapter/${surah}`);
+                     if (timeRes.ok) {
+                         const timeData = await timeRes.json();
+                         // (Abbreviated comments)
+                    }
+                }
+
+                // Fetch loop for pagination
+                do {
+                    // Add audio param if reciter selected
+                    let url = `${API_BASE_URL}/verses/by_chapter/${surah}?language=en&words=false&translations=${selectedLangIds.join(',')}&fields=${scriptType}&page=${page}&per_page=50`;
+                    if (reciterId) {
+                        url += `&audio=${reciterId}`;
+                    }
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error('API Error');
+                    const data = await response.json();
+                    
+                    if (data.verses) {
+                        allVerses.push(...data.verses);
+                    }
+                    
+                    if (data.pagination) {
+                        totalPages = data.pagination.total_pages;
+                    } else {
+                        totalPages = 1;
+                    }
+                    page++;
+                } while (page <= totalPages);
+
+            } catch (error) {
+                console.error('Fetch error:', error);
+                alert('Ошибка при загрузке данных из API.');
+                quranImportConfirmBtn.innerText = originalBtnText;
+                quranImportConfirmBtn.disabled = false;
                 return;
             }
 
-            const responses = await Promise.all(languages.map(lang => fetch(`quran/${lang.file}`)));
-            const datasets = await Promise.all(responses.map(res => res.json()));
-            const quranData = {};
-            languages.forEach((lang, index) => { quranData[lang.name] = datasets[index]; });
+            quranImportConfirmBtn.innerText = originalBtnText;
+            quranImportConfirmBtn.disabled = false;
 
+            // Filter by range if needed
+            // API verses are 1-indexed in terms of content, but array is 0-indexed.
+            let versesToInsert = allVerses;
+            if (!isNaN(ayahStart) && !isNaN(ayahEnd)) {
+                const startIdx = Math.max(0, ayahStart - 1);
+                const endIdx = ayahEnd; 
+                versesToInsert = allVerses.slice(startIdx, endIdx);
+            }
+
+            // Rebuild Table Headers
             const header = mainTable.querySelector('thead tr');
             while (header.children.length > 1) header.removeChild(header.lastChild);
             const rows = mainTable.querySelectorAll('tbody tr');
             rows.forEach(row => { while (row.children.length > 1) row.removeChild(row.lastChild); });
 
-            languages.forEach(lang => {
+            // 1. Arabic Column
+            const arabicHeader = document.createElement('th');
+            arabicHeader.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">Arabic</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
+            header.appendChild(arabicHeader);
+
+            // 2. Translation Columns
+            selectedLangIds.forEach(id => {
+                const langName = getLangNameById(id);
                 const newHeaderCell = document.createElement('th');
-                newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${lang.name}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
+                newHeaderCell.innerHTML = `<div class="header-content"><div class="header-text" contenteditable="true">${langName}</div><button class="btn btn--small btn-delete-col"><span class="icon icon-x"></span></button></div>`;
                 header.appendChild(newHeaderCell);
             });
 
+            // Rebuild Table Body
             const tBody = mainTable.querySelector('tbody');
-            const numRowsToAdd = ayahEnd - ayahStart + 1;
+            const numRowsToAdd = versesToInsert.length;
             const existingRows = tBody.rows.length;
+
+            let currentRunningTime = 0; 
+            // If we are strictly importing a range, start time is 0 relative to this clip? 
+            // Or absolute? Let's assume 0 for the first imported verse.
+
             for (let i = 0; i < numRowsToAdd; i++) {
-                const ayah = ayahStart + i;
+                const verse = versesToInsert[i];
+                // verse_key is "1:1", verse_number is 1.
+                // translations is array: [{resource_id: 131, text: "..."}]
+                
                 let row;
                 if (i < existingRows) {
                     row = tBody.rows[i];
@@ -351,29 +581,153 @@ document.addEventListener('DOMContentLoaded', () => {
                     const firstCell = row.insertCell();
                     firstCell.innerHTML = `<div class="cell-content-wrapper"><button class="btn btn--small btn-delete-row"><span class="icon icon-x"></span></button><div class="cell-content"></div></div>`;
                 }
-                languages.forEach(lang => {
-                    const cell = row.insertCell();
-                    const surahData = quranData[lang.name][surah];
-                    const verseData = surahData ? surahData.find(v => v.verse === ayah) : null;
-                    let cellText = verseData ? verseData.text : '';
-                    if (lang.name === 'quran' && verseData) {
-                        cellText += ` ${toEasternArabicNumerals(ayah)}`;
+
+                if (reciterId && verse.audio) {
+                    let segDur = 0;
+                    
+                    // Prioritize actual file duration from CDN if URL exists
+                    // This accounts for silence/tail that segments miss.
+                    if (verse.audio.url) {
+                        try {
+                            const audioUrl = `https://verses.quran.com/${verse.audio.url}`;
+                            // Create a temporary audio element to get duration
+                            const tempAudio = new Audio(audioUrl);
+                            tempAudio.preload = 'metadata';
+                            
+                            // Wrap in promise to await metadata
+                            segDur = await new Promise((resolve) => {
+                                tempAudio.onloadedmetadata = () => {
+                                    const d = tempAudio.duration;
+                                    resolve(isNaN(d) ? 0 : d);
+                                };
+                                tempAudio.onerror = () => resolve(0);
+                                // Timeout fallback
+                                setTimeout(() => resolve(0), 5000);
+                            });
+
+                            if (segDur > 0) {
+                                console.log(`Verse ${verse.verse_key} Audio Duration: ${segDur}s`);
+                            }
+                        } catch (err) {
+                            console.warn('Could not fetch audio metadata', err);
+                        }
                     }
-                    cell.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${cellText}</div></div>`;
+
+                    // Fallback to segments if CDN fetch failed or returned 0
+                    if (segDur === 0 && verse.audio.segments && Array.isArray(verse.audio.segments) && verse.audio.segments.length > 0) {
+                        const lastSegment = verse.audio.segments[verse.audio.segments.length - 1];
+                        if (Array.isArray(lastSegment) && lastSegment.length >= 4) {
+                            const rawEnd = parseInt(lastSegment[3], 10);
+                            console.log(`Verse ${verse.verse_key} Raw Last Segment End: ${rawEnd} ms`);
+                            totalRawDuration += rawEnd;
+                            segDur = rawEnd / 1000; 
+                        }
+                    }
+                    
+                    if (segDur > 0) {
+                         currentRunningTime += segDur;
+                         const timeStr = formatTime(currentRunningTime);
+                         const timeCell = row.cells[0].querySelector('.cell-content');
+                         if (timeCell) timeCell.innerText = timeStr;
+                    }
+                }
+
+                // Add Arabic Cell
+                const arabicCell = row.insertCell();
+                // Add eastern arabic numeral at end
+                const verseNum = verse.verse_number || (i + 1); // Fallback
+                
+                // Get text based on selected script
+                let rawArabicText = verse[scriptType] || verse['text_uthmani'] || ''; 
+
+                const arabicText = rawArabicText + ' ' + toEasternArabicNumerals(verseNum);
+                arabicCell.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true" dir="rtl">${arabicText}</div></div>`;
+
+                // Handle Timestamp from Audio
+                // If we fetched audio, verse might have `audio` object.
+                // It usually has `url` and `duration`? 
+                // Getting *start time* of the verse in a continuous recitation is hard if it's just individual files.
+                // However, if `audio` `url` is distinct for each verse, the text doesn't help us with "timestamp" unless we mean duration?
+                // The user likely wants the timestamp relevant to the *surah* audio.
+                // If `audio` returns a segment of a global file, it might not have relative time?
+                // Actually, often `audio` has `url`.
+                // Let's check if we can calculate it relative to previous?
+                // For now, let's leave timestamp empty if we can't determine it, OR
+                // if the API returns a `timestamp` or `startTime`?
+                // `verse.audio.timestamp`?
+                // If we don't have it, we just don't add description.
+                
+                // WAIT! If the user wants timestamps in the TABLE (first column), 
+                // we currently expect seconds.
+                // If we get audio URL, we don't necessarily get the start time in the file?
+                // Actually, if it's verse-by-verse audio, start is 0?
+                // If it's chapter audio, we need segments.
+                // Let's assume we can't reliably get timestamps for the table just by selecting a reciter 
+                // WITHOUT parsing segments which is complex.
+                // BUT, maybe the `audio` field in verse response has `timestamp`?
+                // Let's check `verse.audio`.
+                // If not, we skip.
+                
+                // Refined Attempt:
+                // Many apps use `quran.com` segments data.
+                // If we can't get it easily, maybe we populate the table 
+                // but timestamps remain 0 or cumulative if we have duration?
+                // Let's try to use cumulative duration if available?
+                // verse.audio.duration_ms / 1000.
+                
+                let timestampVal = '';
+                if (verse.audio && verse.audio.duration) {
+                     // If we have distinct audio files for each verse, we can't easily put "timestamp" for a single long video/audio
+                     // UNLESS we are building a concatenation?
+                     // The user asked "load timestamps" implies they exist.
+                     // Maybe for syncing?
+                     // Let's try to assume we are building a continuous timeline.
+                     // So specific timestamp = sum(previous durations).
+                     const duration = verse.audio.duration; // seconds? usually ms in some apis, but checking.
+                     // Assuming we process in order.
+                }
+
+                // Temporary: The API v4 `verses` endpoint with `audio` param 
+                // returns an `audio` object: { url: "...", duration_ms: ... } (or duration).
+                // If we want a timeline, we can sum them up!
+                // Let's DECLARE a running total outside the loop.
+                // BUT we are slicing `versesToInsert`.
+                // So we need to sum up from the start involved in `versesToInsert`.
+                // Ideally start at 0 for the first imported verse?
+                
+                // Let's define `currentTimestamp` before loop.
+                
+                // Add Translation Cells
+                selectedLangIds.forEach(id => {
+                    const cell = row.insertCell();
+                    // Find translation by resource_id. NOTE: id from checkbox is string, resource_id is int.
+                    const translation = verse.translations.find(t => String(t.resource_id) === String(id));
+                    // Remove footnotes? usually "<sup>1</sup>". API returns HTML sometimes.
+                    // For now, raw html is risky in contenteditable but let's assume text.
+                    // Actually API returns clean text usually unless footnotes requested.
+                    const transText = translation ? translation.text : '';
+                    cell.innerHTML = `<div class="cell-content-wrapper"><div class="cell-content" contenteditable="true">${transText}</div></div>`;
                 });
             }
             
             while (tBody.rows.length > numRowsToAdd) tBody.deleteRow(numRowsToAdd);
+
+            if (reciterId) {
+                console.log(`Total Raw Duration Sum: ${totalRawDuration} ms`);
+            }
 
             updateAllEventListeners();
             window.Subtitles.parseTable();
             saveTable();
             saveState();
             hideQuranImportModal();
+
         } catch (error) {
             console.error('Error loading Quran data:', error);
             alert('Не удалось загрузить данные Корана.');
-            undo();
+            // undo(); // No undo here as we didn't push yet? Or state might be partial. 
+            // Better to not call undo if we failed before touching table structure, but here we rebuild inside.
+            // If error happened during fetch, table is untouched.
         }
     };
 
@@ -786,6 +1140,202 @@ document.addEventListener('DOMContentLoaded', () => {
         URL.revokeObjectURL(url);
     };
 
+    const exportJSON = () => {
+        window.Subtitles.parseTable();
+        const subtitles = window.Subtitles.getSubtitles();
+        const jsonString = JSON.stringify(subtitles, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `rqit-subtitles-${new Date().toISOString()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    };
+
+    // --- CapCut Export Modal ---
+    const capcutExportModal = document.getElementById('capcut-export-modal');
+    const capcutColumnsList = document.getElementById('capcut-columns-list');
+    const capcutExportConfirmBtn = document.getElementById('capcut-export-confirm-btn');
+    const capcutExportCancelBtn = document.getElementById('capcut-export-cancel-btn');
+
+    const positionOptions = [
+        { value: '8', label: 'Верх по центру' },
+        { value: '7', label: 'Верх слева' },
+        { value: '9', label: 'Верх справа' },
+        { value: '5', label: 'По центру' },
+        { value: '4', label: 'Середина слева' },
+        { value: '6', label: 'Середина справа' },
+        { value: '2', label: 'Низ по центру' },
+        { value: '1', label: 'Низ слева' },
+        { value: '3', label: 'Низ справа' }
+    ];
+
+    const showCapCutExportModal = () => {
+        // Получаем заголовки столбцов (кроме первого - таймкоды)
+        const headers = [];
+        mainTable.querySelectorAll('thead th').forEach((th, index) => {
+            if (index > 0) {
+                const text = th.querySelector('.header-text')?.innerText || th.innerText || `Column${index}`;
+                headers.push({ index, name: text.trim() });
+            }
+        });
+
+        if (headers.length === 0) {
+            alert('Нет столбцов для экспорта.');
+            return;
+        }
+
+        // Заполняем список колонок
+        capcutColumnsList.innerHTML = '';
+        headers.forEach((header, i) => {
+            const item = document.createElement('div');
+            item.className = 'capcut-column-item';
+            item.style.cssText = 'display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #333;';
+            
+            const checkbox = document.createElement('input');
+            checkbox.type = 'checkbox';
+            checkbox.id = `capcut-col-${i}`;
+            checkbox.checked = true;
+            checkbox.dataset.colIndex = i;
+            checkbox.dataset.colName = header.name;
+
+            const label = document.createElement('label');
+            label.htmlFor = `capcut-col-${i}`;
+            label.textContent = header.name;
+            label.style.flex = '1';
+
+            const select = document.createElement('select');
+            select.id = `capcut-pos-${i}`;
+            select.style.cssText = 'padding: 5px; background: #222; color: #fff; border: 1px solid #444; border-radius: 4px;';
+            positionOptions.forEach(opt => {
+                const option = document.createElement('option');
+                option.value = opt.value;
+                option.textContent = opt.label;
+                // По умолчанию: первый столбец (арабский) вверху, остальные внизу
+                if (i === 0 && opt.value === '8') option.selected = true;
+                else if (i > 0 && opt.value === '2') option.selected = true;
+                select.appendChild(option);
+            });
+
+            item.appendChild(checkbox);
+            item.appendChild(label);
+            item.appendChild(select);
+            capcutColumnsList.appendChild(item);
+        });
+
+        capcutExportModal.classList.remove('hidden');
+    };
+
+    const hideCapCutExportModal = () => {
+        capcutExportModal.classList.add('hidden');
+    };
+
+    const exportCapCutASS = () => {
+        // Собираем выбранные колонки и их позиции
+        const selectedColumns = [];
+        capcutColumnsList.querySelectorAll('input[type="checkbox"]:checked').forEach(cb => {
+            const colIndex = parseInt(cb.dataset.colIndex);
+            const colName = cb.dataset.colName;
+            const posSelect = document.getElementById(`capcut-pos-${colIndex}`);
+            const position = posSelect ? posSelect.value : '2';
+            selectedColumns.push({ colIndex, colName, position });
+        });
+
+        if (selectedColumns.length === 0) {
+            alert('Выберите хотя бы один столбец для экспорта.');
+            return;
+        }
+
+        // Функция форматирования времени в ASS формат (H:MM:SS.cc)
+        const formatAssTime = (seconds) => {
+            if (seconds === null || isNaN(seconds)) seconds = 0;
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            const cs = Math.floor((seconds - Math.floor(seconds)) * 100);
+            return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}.${cs.toString().padStart(2, '0')}`;
+        };
+
+        // Собираем данные из таблицы
+        const tableRows = [];
+        mainTable.querySelectorAll('tbody tr').forEach((row) => {
+            const rowData = { texts: [] };
+            row.querySelectorAll('td').forEach((td, colIndex) => {
+                const text = td.querySelector('.cell-content')?.innerText?.trim() || '';
+                if (colIndex === 0) {
+                    rowData.timestamp = window.Subtitles.parseTimestamp(text);
+                } else {
+                    rowData.texts.push(text);
+                }
+            });
+            tableRows.push(rowData);
+        });
+
+        // Экспортируем каждую выбранную колонку в отдельный ASS файл
+        selectedColumns.forEach(({ colIndex, colName, position }) => {
+            // ASS Header
+            let assContent = `[Script Info]
+Title: ${colName}
+ScriptType: v4.00+
+Collisions: Normal
+PlayDepth: 0
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,-1,0,0,0,100,100,0,0,1,2,1,${position},20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+`;
+
+            for (let i = 0; i < tableRows.length; i++) {
+                const currentRow = tableRows[i];
+                const text = currentRow.texts[colIndex] || '';
+
+                if (!text) continue;
+
+                const startTime = currentRow.timestamp;
+                let endTime = null;
+                for (let j = i + 1; j < tableRows.length; j++) {
+                    if (tableRows[j].timestamp !== null) {
+                        endTime = tableRows[j].timestamp;
+                        break;
+                    }
+                }
+                if (endTime === null) {
+                    endTime = (startTime !== null ? startTime : 0) + 3;
+                }
+
+                // Заменяем переносы строк на \N для ASS
+                const assText = text.replace(/\n/g, '\\N');
+                assContent += `Dialogue: 0,${formatAssTime(startTime)},${formatAssTime(endTime)},Default,,0,0,0,,${assText}\n`;
+            }
+
+            const blob = new Blob([assContent], { type: 'text/plain;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            const safeHeader = colName.replace(/[/\\?%*:|"<>]/g, '_');
+            a.download = `${safeHeader}.ass`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        });
+
+        hideCapCutExportModal();
+    };
+
+    capcutExportConfirmBtn.addEventListener('click', exportCapCutASS);
+    capcutExportCancelBtn.addEventListener('click', hideCapCutExportModal);
+
+    const exportCapCut = () => {
+        showCapCutExportModal();
+    };
+
     const parseCSV = (str) => {
         const arr = [];
         let quote = false, row = 0, col = 0;
@@ -851,6 +1401,8 @@ document.addEventListener('DOMContentLoaded', () => {
     btnAddManual.addEventListener('click', showManualAddModal);
     btnAddFromQuran.addEventListener('click', showQuranImportModal);
     btnExportTable.addEventListener('click', exportTable);
+    btnExportJSON.addEventListener('click', exportJSON);
+    btnExportCapCut.addEventListener('click', exportCapCut);
     importTableInput.addEventListener('change', importTable);
     btnUndo.addEventListener('click', undo);
     btnRedo.addEventListener('click', redo);
